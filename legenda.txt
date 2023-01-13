@@ -1,0 +1,12 @@
+Nelle righe che iniziano per la lettera a vanno ad indicare gli archi
+ogni riga contiene 5 informazioni tra cui:
+1) Sorgente dell'arco
+2) Destinazione dell'arco
+3) uno 0 per dividere
+4) Capacità dell'arco
+5) Costo dell'arco
+
+Successivamente le righe che iniziano con la lettera n descrivono i nodi
+Le righe contengono due informazioni principali:
+1) Il nome del nodo che sarà indicato da un numero intero
+2) Il deficit del nodo??

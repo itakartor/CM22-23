@@ -6,7 +6,7 @@ import numpy as np
 
 
 PATH_DIRECTORY_TEST = ".\\testAnalyze"
-PATH_DIRECTORY_OUTPUT = ".\\testAnalyze"
+PATH_DIRECTORY_OUTPUT = ".\\outputMatrix"
 NAME_FILE_MATRIX = "matrix"
 class Arch():
     index:int
@@ -23,8 +23,8 @@ class Node():
         return f"n Name: {self.name}, Deficit: {self.deficit}"
 class IncidenceMatrix():
     m:np.array = np.array([])
-    arches = {} #the key is the source-destination and the value is the Arch object 
-    nodes:Node = []
+    arches:dict = {} #the key is the source-destination and the value is the Arch object 
+    nodes:list = []
     nRow:int
     nColl:int
     archParallel:int
@@ -48,16 +48,25 @@ class IncidenceMatrix():
                 seed = {self.seed} \n'''
         rStr = rStr + rMatrixStr
         return rStr
+
+# This function created a dir with a name
+def creationDir(nameDir:str):
+    if(not(os.path.isdir(nameDir))):
+        os.makedirs(nameDir)
+
 # This fuction take 2 params:
-#
-#
-def buildIncidenceMatrix(nodes,arches):
+# - A list of Nodes 
+# - A dictionary of Arches
+def buildIncidenceMatrix(nodes:list,arches:dict):
     cIndex:int = 0
-    arrMatrix = []
-    rMatrix:IncidenceMatrix = IncidenceMatrix() 
+    arrMatrix:list = []
+    rMatrix:IncidenceMatrix = IncidenceMatrix()
+    print(f"numFile: {len(os.listdir(PATH_DIRECTORY_TEST))}") 
     for path in os.listdir(PATH_DIRECTORY_TEST):
+        
         i:int = 0
-        w = open(os.path.join(PATH_DIRECTORY_TEST,f"{NAME_FILE_MATRIX}{i}.txt"), "w")
+        creationDir(PATH_DIRECTORY_OUTPUT)
+        w = open(os.path.join(PATH_DIRECTORY_OUTPUT,f"{NAME_FILE_MATRIX}{i}.txt"), "w")
         r = open(os.path.join(PATH_DIRECTORY_TEST, path), "r")
         for line in r:
             match line[0]:
@@ -112,27 +121,25 @@ def buildIncidenceMatrix(nodes,arches):
         # [print(nodes[i]) for i in range(len(nodes))]
         # print("++++++++++++++++++++++")
         # [print(arches[i]) for i in range(len(arches))]
-        rMatrix.nodes.append(nodes)
+        rMatrix.nodes.extend(nodes)
         rMatrix.arches.update(arches)
         arrMatrix.append(rMatrix)
     return arrMatrix 
             
 def main():
     print("MAIN")
-    nodes = []
-    arches = {}
-    arr = buildIncidenceMatrix(nodes,arches)
+    arr:list = buildIncidenceMatrix([],{})
     # first param is the matrix/array
     # second param is the position of new column
     # third param is new value
     # fourth is the number of axis
     #m = insert(m, [1], [[1],[2],[3]], 1)
     #matrix:IncidenceMatrix = IncidenceMatrix(3,4);
-    #print(str(matrix))
-    #print(matix)
-    #[print(arr[i]) for i in range(len(arr))]
-    print(len(arr))
-    print(len(arr[0].nodes))
-    [print(str(arr[0].nodes[i]) for i in range(len(nodes)))]
-    
+
+    [print(str(arr[0].nodes[i])) for i in range(len(arr[0].nodes))]
+    for x in arr[0].arches:
+        print(x)
+        print (str(arr[0].arches[x]))
+            
+
 main()

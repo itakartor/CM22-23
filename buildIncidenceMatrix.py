@@ -53,6 +53,25 @@ class IncidenceMatrix():
 def creationDir(nameDir:str):
     if(not(os.path.isdir(nameDir))):
         os.makedirs(nameDir)
+# This function builds a diagonal positive Matrix and returns it
+# @param nRow: the number of rows
+# @param nColl: the number of collums
+def diagonalM(nRow:int, nColl:int) -> np.array:
+
+    m:list = []
+    s:list = []
+
+    for i in range(nRow):
+        for j in range(nColl):    
+            if(j == i):
+                s.append(np.random.randint(0))
+            else:
+                s.append(0)
+            if(j == nColl-1):
+                m.append(s)
+                s = []
+    print(np.array(m))
+    return np.array(m)
 
 # This fuction take 2 params:
 # - A list of Nodes 

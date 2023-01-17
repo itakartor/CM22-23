@@ -143,11 +143,19 @@ def buildIncidenceMatrix(nodes:list,arches:dict):
         rMatrix.nodes.extend(nodes)
         rMatrix.arches.update(arches)
         arrMatrix.append(rMatrix)
+
     return arrMatrix 
-            
+
+def buildDeficitVector(listNodes:list) -> np.array:
+    c = np.array([])
+    for node in listNodes:
+       c = np.append(c,[[node.deficit]])
+    return c
+#def testConservationRule(incidenceMatrix:np.array, x:np.array,c:np.array):
+
 def main():
     print("MAIN")
-    arr:list = buildIncidenceMatrix([],{})
+    eMatrix:list = buildIncidenceMatrix([],{})
     # first param is the matrix/array
     # second param is the position of new column
     # third param is new value
@@ -155,10 +163,14 @@ def main():
     #m = insert(m, [1], [[1],[2],[3]], 1)
     #matrix:IncidenceMatrix = IncidenceMatrix(3,4);
 
-    [print(str(arr[0].nodes[i])) for i in range(len(arr[0].nodes))]
-    for x in arr[0].arches:
-        print(x)
-        print (str(arr[0].arches[x]))
+    # [print(str(arr[0].nodes[i])) for i in range(len(arr[0].nodes))]
+    # for x in arr[0].arches:
+    #     print(x)
+    #     print (str(arr[0].arches[x]))
+    print(len(eMatrix))
+    c = buildDeficitVector(eMatrix[0].nodes)
+    print(c)
+    #testConservationRule()
             
 
 main()

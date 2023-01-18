@@ -1,9 +1,20 @@
 
 import os
 import numpy as np
- 
+from functools import wraps
+import time
 
 
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        print(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
+        return result
+    return timeit_wrapper
 
 PATH_DIRECTORY_TEST = ".\\testAnalyze"
 PATH_DIRECTORY_OUTPUT = ".\\outputMatrix"
@@ -151,8 +162,20 @@ def buildDeficitVector(listNodes:list) -> np.array:
     for node in listNodes:
        c = np.append(c,[[node.deficit]])
     return c
-#def testConservationRule(incidenceMatrix:np.array, x:np.array,c:np.array):
 
+# this function has to calculate the condition Ex = c
+@timeit
+def testConservationRule(incidenceMatrix:np.matrix,c:np.array,x:np.array = np.array([])):
+    # det = np.linalg.det(incidenceMatrix)
+    # print("det: {det}")
+    matrixInv = incidenceMatrix.getI()
+    
+    print(matrixInv)
+    x = np.matmul(matrixInv,np.transpose(c))
+    print(f"x: {x}")
+
+def conjugateGradient():
+    return 
 def main():
     print("MAIN")
     eMatrix:list = buildIncidenceMatrix([],{})
@@ -168,9 +191,11 @@ def main():
     #     print(x)
     #     print (str(arr[0].arches[x]))
     print(len(eMatrix))
+    matrix = np.matrix(eMatrix[0].m)
     c = buildDeficitVector(eMatrix[0].nodes)
-    print(c)
-    #testConservationRule()
+    print(matrix)
+    
+    testConservationRule(matrix,c)
             
 
 main()

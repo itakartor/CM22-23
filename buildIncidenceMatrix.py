@@ -172,10 +172,33 @@ def testConservationRule(incidenceMatrix:np.matrix,c:np.array,x:np.array = np.ar
     
     print(matrixInv)
     x = np.matmul(matrixInv,np.transpose(c))
-    print(f"x: {x}")
-
-def conjugateGradient():
-    return 
+    print(f"DIRECT TEST x: {x}")
+# algorithm
+# A is a matrix of system Ax = b
+# b is a vector of system Ax = b
+# x0 is the starting point
+# n is the number of iterations of the algorithm
+@timeit
+def conjugateGradient(A:np.matrix, b:np.array, x0:np.array, n:int):
+    
+    r:np.array = np.copy(b)# - A*x0 # residual Ax - b
+    x = np.array([])
+    d = np.copy(r) # directions vector
+    alpha = np.array([])
+    beta = np.array([])
+    print(f"r: {r}")
+    print(f"A.dimensions {A.shape}")
+    for j in range(n):
+        numAlpha = np.matmul(np.transpose(r),r)
+        
+        denAlpha = np.matmul(np.transpose(d),np.matmul(A,d)) 
+        alpha = np.append(alpha,numAlpha/denAlpha)
+        x = np.append(x, x[j] + alpha[j + 1]*d)
+        r = r - alpha[j + 1]*(A*d)
+        beta = np.append(beta,np.matmul(np.transpose(r),r)/numAlpha)
+        d = r + beta[j]*d
+    
+    print(f"CG x:{x}") 
 def main():
     print("MAIN")
     eMatrix:list = buildIncidenceMatrix([],{})
@@ -196,6 +219,8 @@ def main():
     print(matrix)
     
     testConservationRule(matrix,c)
+    print(f"shape[0]: {matrix.shape[0]}")
+    conjugateGradient(matrix,c, np.zeros(matrix.shape[0]), 100)
             
 
 main()

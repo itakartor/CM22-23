@@ -67,22 +67,24 @@ def creationDir(nameDir:str):
 # This function builds a diagonal positive Matrix and returns it
 # @param nRow: the number of rows
 # @param nColl: the number of collums
-def diagonalM(nRow:int, nColl:int) -> np.array:
-
-    m:list = []
-    s:list = []
+def diagonalM(nRow:int, nColl:int) -> np.matrix:
+    gen:np.random = np.random
+    m:np.array;
+    s:np.array = np.array([])
 
     for i in range(nRow):
         for j in range(nColl):    
             if(j == i):
-                s.append(np.random.randint(0))
+                s = np.append(s,[gen.randint(1,10)])
             else:
-                s.append(0)
+                s = np.append(s,[0])
             if(j == nColl-1):
-                m.append(s)
-                s = []
-    print(np.array(m))
-    return np.array(m)
+                if(i == 0):
+                    m = s
+                else :
+                    m = np.vstack((m,s))
+                s = np.array([])
+    return np.matrix(m)
 
 # This fuction take 2 params:
 # - A list of Nodes 
@@ -181,6 +183,10 @@ def testConservationRule(incidenceMatrix:np.matrix,c:np.array,x:np.array = np.ar
 @timeit
 def conjugateGradient(A:np.matrix, b:np.array, x0:np.array, n:int):
     
+    if(A.shape[1] != b.shape[0]):
+        print("ERROR on dimension")
+        print(f"dim A: {A.shape}, dim b: {b.shape}")
+        return
     r:np.array = np.copy(b)# - A*x0 # residual Ax - b
     x = np.array([])
     d = np.copy(r) # directions vector
@@ -213,14 +219,16 @@ def main():
     # for x in arr[0].arches:
     #     print(x)
     #     print (str(arr[0].arches[x]))
-    print(len(eMatrix))
-    matrix = np.matrix(eMatrix[0].m)
-    c = buildDeficitVector(eMatrix[0].nodes)
-    print(matrix)
+    # print(len(eMatrix))
+    # matrix = np.matrix(eMatrix[0].m)
+    # c = buildDeficitVector(eMatrix[0].nodes)
+    # print(matrix)
     
-    testConservationRule(matrix,c)
-    print(f"shape[0]: {matrix.shape[0]}")
-    conjugateGradient(matrix,c, np.zeros(matrix.shape[0]), 100)
-            
+    # testConservationRule(matrix,c)
+    # print(f"shape[0]: {matrix.shape[0]}")
+    # conjugateGradient(matrix,c, np.zeros(matrix.shape[0]), 100)
+    diagonal = diagonalM(3,3)
+    print(diagonal)
+    print(diagonal.shape)        
 
 main()

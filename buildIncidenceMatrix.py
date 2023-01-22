@@ -159,12 +159,16 @@ def buildIncidenceMatrix(nodes:list,arches:dict):
 
     return arrMatrix 
 
-def buildDeficitVector(listNodes:list) -> np.array:
+def buildArrayDeficit(listNodes:list) -> np.array:
     c = np.array([])
     for node in listNodes:
        c = np.append(c,[[node.deficit]])
     return c
-
+def buildArrayCosts(dictArches:dict) -> np.array:
+    b = np.array([])
+    for key in dictArches.keys():
+       b = np.append(b,[[dictArches[key].cost]])
+    return b
 # this function has to calculate the condition Ex = c
 @timeit
 def testConservationRule(incidenceMatrix:np.matrix,c:np.array,x:np.array = np.array([])):
@@ -182,7 +186,6 @@ def testConservationRule(incidenceMatrix:np.matrix,c:np.array,x:np.array = np.ar
 # n is the number of iterations of the algorithm
 @timeit
 def conjugateGradient(A:np.matrix, b:np.array, x0:np.array, n:int):
-    
     if(A.shape[1] != b.shape[0]):
         print("ERROR on dimension")
         print(f"dim A: {A.shape}, dim b: {b.shape}")
@@ -208,6 +211,8 @@ def conjugateGradient(A:np.matrix, b:np.array, x0:np.array, n:int):
 def main():
     print("MAIN")
     eMatrix:list = buildIncidenceMatrix([],{})
+    c = buildArrayDeficit(eMatrix[0].nodes)
+    b = buildArrayCosts(eMatrix[0].arches)
     # first param is the matrix/array
     # second param is the position of new column
     # third param is new value
@@ -220,15 +225,16 @@ def main():
     #     print(x)
     #     print (str(arr[0].arches[x]))
     # print(len(eMatrix))
-    # matrix = np.matrix(eMatrix[0].m)
-    # c = buildDeficitVector(eMatrix[0].nodes)
-    # print(matrix)
-    
+    matrix = np.matrix(eMatrix[0].m)
+    diagonalMatrix = diagonalM(matrix.shape[1],matrix.shape[1])
+    A = np.matmul(np.matmul(matrix,diagonalMatrix.getI()),matrix.getT())
+    #print(f"shape matrix E: {matrix.shape}, {diagonalMatrix.shape}")
+    vectorOfb = np.matmul(np.matmul(matrix,diagonalMatrix.getI()),b) - c
     # testConservationRule(matrix,c)
     # print(f"shape[0]: {matrix.shape[0]}")
-    # conjugateGradient(matrix,c, np.zeros(matrix.shape[0]), 100)
-    diagonal = diagonalM(3,3)
-    print(diagonal)
-    print(diagonal.shape)        
+    conjugateGradient(A,np.transpose(vectorOfb), np.zeros(matrix.shape[0]), 100)
+    
+    # print(diagonal)
+    # print(diagonal.shape)        
 
 main()

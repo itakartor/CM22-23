@@ -3,22 +3,29 @@ import os
 import numpy as np
 from functools import wraps
 import time
+import matplotlib.pyplot as plt
 
+
+PATH_DIRECTORY_TEST = ".\\testAnalyze"
+PATH_DIRECTORY_OUTPUT = ".\\outputMatrix"
+NAME_FILE_MATRIX_INCIDENCE = "incidenceMatrix"
+NAME_FILE_SOLUTION = "xSolutionVector"
+NAME_FILE_TIME = "times"
+ACTIVE_DRAW_GRAPH = 0
 
 def timeit(func):
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
+        w = open(os.path.join(PATH_DIRECTORY_OUTPUT,f"{NAME_FILE_TIME}.txt"), "a")
         start_time = time.perf_counter()
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        print(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
+        #print(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
+        w.write(f"Function {func.__name__} Took {total_time:.4f} seconds\n")
         return result
     return timeit_wrapper
 
-PATH_DIRECTORY_TEST = ".\\testAnalyze"
-PATH_DIRECTORY_OUTPUT = ".\\outputMatrix"
-NAME_FILE_MATRIX = "matrix"
 class Arch():
     index:int
     source:int
@@ -60,6 +67,20 @@ class IncidenceMatrix():
         rStr = rStr + rMatrixStr
         return rStr
 
+# this class rapresents a list of istances of problem MCF for CG algorithm
+# A*x = vectorOfB
+class istanceMCF_CG:
+    A:np.matrix #E*D^-1*Et
+    EMatrix:np.matrix
+    diagonalMatrix:np.matrix
+    vectorOfB:np.array
+
+class listOfPointsXY:
+    listX:list[int]
+    listY:list[int]
+class PointXY:
+    x:int
+    y:int
 # This function created a dir with a name
 def creationDir(nameDir:str):
     if(not(os.path.isdir(nameDir))):
@@ -98,7 +119,7 @@ def buildIncidenceMatrix(nodes:list,arches:dict):
         
         i:int = 0
         creationDir(PATH_DIRECTORY_OUTPUT)
-        w = open(os.path.join(PATH_DIRECTORY_OUTPUT,f"{NAME_FILE_MATRIX}{i}.txt"), "w")
+        w = open(os.path.join(PATH_DIRECTORY_OUTPUT,f"{NAME_FILE_MATRIX_INCIDENCE}{i}.txt"), "w")
         r = open(os.path.join(PATH_DIRECTORY_TEST, path), "r")
         for line in r:
             match line[0]:
@@ -156,7 +177,8 @@ def buildIncidenceMatrix(nodes:list,arches:dict):
         rMatrix.nodes.extend(nodes)
         rMatrix.arches.update(arches)
         arrMatrix.append(rMatrix)
-
+        w.close()
+        r.close()
     return arrMatrix 
 
 def buildArrayDeficit(listNodes:list) -> np.array:
@@ -178,62 +200,127 @@ def testConservationRule(incidenceMatrix:np.matrix,c:np.array,x:np.array = np.ar
     
     print(matrixInv)
     x = np.matmul(matrixInv,np.transpose(c))
-    print(f"DIRECT TEST x: {x}")
+    print(f"\nDIRECT TEST x: {x}\n")
+
+def createInstanceMCF_CG(eMatrixs:list) -> list[istanceMCF_CG]:
+    istancesProblem:list = []
+    for i in range(len(eMatrixs)):
+        istanceMCF = istanceMCF_CG()
+        c = buildArrayDeficit(eMatrixs[i].nodes)
+        b = buildArrayCosts(eMatrixs[i].arches)
+        istanceMCF.matrix = np.matrix(eMatrixs[i].m)
+        numOfArches:int = istanceMCF.matrix.shape[1]
+        # this matrix is m*m that is arches number  
+        istanceMCF.diagonalMatrix = diagonalM(numOfArches,numOfArches)
+        #E*D^-1*Et
+        istanceMCF.A = np.matmul(np.matmul(istanceMCF.matrix,istanceMCF.diagonalMatrix.getI()),istanceMCF.matrix.getT())
+        #It's all values w
+        istanceMCF.vectorOfb = np.matmul(np.matmul(istanceMCF.matrix,istanceMCF.diagonalMatrix.getI()),b) - c
+        istancesProblem.append(istanceMCF)
+    return istancesProblem
+    
 # algorithm
 # A is a matrix of system Ax = b
 # b is a vector of system Ax = b
 # x0 is the starting point
 # n is the number of iterations of the algorithm
 @timeit
-def conjugateGradient(A:np.matrix, b:np.array, x0:np.array, n:int):
+def conjugateGradient(A:np.matrix, b:np.array, x:np.array, n:int) ->listOfPointsXY:
+    w = open(os.path.join(PATH_DIRECTORY_OUTPUT,f"{NAME_FILE_SOLUTION}.txt"), "w")
+    xGraph:list[int] = [] # number of iteration
+    yGraph:list[int] = [] # difference between real b and artificial b
+    listPoints:listOfPointsXY = listOfPointsXY()
+    listPoints.listX = []
+    listPoints.listY = []
     if(A.shape[1] != b.shape[0]):
+        print('\n-------------------------------------')
         print("ERROR on dimension")
         print(f"dim A: {A.shape}, dim b: {b.shape}")
+        print('-------------------------------------\n')
         return
     r:np.array = np.copy(b)# - A*x0 # residual Ax - b
-    x = np.array([])
     d = np.copy(r) # directions vector
     alpha = np.array([])
     beta = np.array([])
-    print(f"r: {r}")
-    print(f"A.dimensions {A.shape}")
+    # print(f"r: {r}")
+    # print(f"A.dimensions {A.shape}")
+    proveB:int
     for j in range(n):
         numAlpha = np.matmul(np.transpose(r),r)
-        
-        denAlpha = np.matmul(np.transpose(d),np.matmul(A,d)) 
+        denAlpha = np.matmul(np.transpose(d),np.matmul(A,d))
+
         alpha = np.append(alpha,numAlpha/denAlpha)
-        x = np.append(x, x[j] + alpha[j + 1]*d)
-        r = r - alpha[j + 1]*(A*d)
+        #print(f"alpha{j}:{alpha[j]}")
+        x = x + alpha[j]*d
+        xGraph.append(j)
+        proveB =  np.matmul(A,x)
+        proveBNorm = np.linalg.norm(b - proveB)/np.linalg.norm(proveB) 
+        yGraph.append(proveBNorm)
+        r = r - alpha[j]*(A*d)
         beta = np.append(beta,np.matmul(np.transpose(r),r)/numAlpha)
         d = r + beta[j]*d
+    # print(f"x : {xGraph}")
+    # print(f"y : {yGraph}")
+    listPoints.listX.extend(xGraph)
+    listPoints.listY.extend(yGraph)
+    w.write(f"A*x = b")
+    w.write(f"Shape of A:{A.shape}\n A:\n{A}\n")
+    w.write(f"Shape of x:{x.shape}\n CG x:\n{x}\n")
+    w.write(f"Shape of x:{b.shape}\n CG b:\n{b}\n")
+    w.write(f"Shape of proveB:{proveB.shape}\n CG proveB:\n{proveB}\n")
+    w.write(f"CG proveBNorm:{proveBNorm}\n")
     
-    print(f"CG x:{x}") 
+    w.close()
+    return listPoints
+ 
 def main():
     print("MAIN")
-    eMatrix:list = buildIncidenceMatrix([],{})
-    c = buildArrayDeficit(eMatrix[0].nodes)
-    b = buildArrayCosts(eMatrix[0].arches)
-    # first param is the matrix/array
-    # second param is the position of new column
-    # third param is new value
-    # fourth is the number of axis
-    #m = insert(m, [1], [[1],[2],[3]], 1)
-    #matrix:IncidenceMatrix = IncidenceMatrix(3,4);
-
-    # [print(str(arr[0].nodes[i])) for i in range(len(arr[0].nodes))]
-    # for x in arr[0].arches:
-    #     print(x)
-    #     print (str(arr[0].arches[x]))
-    # print(len(eMatrix))
-    matrix = np.matrix(eMatrix[0].m)
-    diagonalMatrix = diagonalM(matrix.shape[1],matrix.shape[1])
-    A = np.matmul(np.matmul(matrix,diagonalMatrix.getI()),matrix.getT())
-    #print(f"shape matrix E: {matrix.shape}, {diagonalMatrix.shape}")
-    vectorOfb = np.matmul(np.matmul(matrix,diagonalMatrix.getI()),b) - c
-    # testConservationRule(matrix,c)
-    # print(f"shape[0]: {matrix.shape[0]}")
-    conjugateGradient(A,np.transpose(vectorOfb), np.zeros(matrix.shape[0]), 100)
+    eMatrixs:list = buildIncidenceMatrix([],{})
+    lInstancesProblemCG:list[istanceMCF_CG] = createInstanceMCF_CG(eMatrixs=eMatrixs)
+    #for i in range(10):
+    listofListPoint = []
+    for i in range(10):
+        for instance in lInstancesProblemCG:
+            listofListPoint.append(
+                conjugateGradient(
+                    A=instance.A,
+                    b=np.transpose(instance.vectorOfb),
+                    x=np.zeros((instance.A.shape[0],1)),
+                    n=100
+                )
+            ) 
+            plt.plot(listofListPoint[i].listX,listofListPoint[i].listY, label = f'iteration{i}')
     
+    if(ACTIVE_DRAW_GRAPH == 1):
+        plt.xlabel('X-axis')
+        plt.ylabel('Y-axis')
+        plt.title("A simple line graph")
+        # show a legend on the plot
+        plt.legend()
+        plt.show()
+    # c = buildArrayDeficit(eMatrix[0].nodes)
+    # b = buildArrayCosts(eMatrix[0].arches)
+    # # first param is the matrix/array
+    # # second param is the position of new column
+    # # third param is new value
+    # # fourth is the number of axis
+    # #m = insert(m, [1], [[1],[2],[3]], 1)
+    # #matrix:IncidenceMatrix = IncidenceMatrix(3,4);
+
+    # # [print(str(arr[0].nodes[i])) for i in range(len(arr[0].nodes))]
+    # # for x in arr[0].arches:
+    # #     print(x)
+    # #     print (str(arr[0].arches[x]))
+    # # print(len(eMatrix))
+    # matrix = np.matrix(eMatrix[0].m)
+    # diagonalMatrix = diagonalM(matrix.shape[1],matrix.shape[1])
+    # #E*D^-1*Et
+    # A = np.matmul(np.matmul(matrix,diagonalMatrix.getI()),matrix.getT())
+    # #print(f"shape matrix E: {matrix.shape}, {diagonalMatrix.shape}")
+    # #It's all values w
+    # vectorOfb = np.matmul(np.matmul(matrix,diagonalMatrix.getI()),b) - c
+    # # testConservationRule(matrix,c)
+    # #print(f"shape[0]: {matrix.shape[0]}")    
     # print(diagonal)
     # print(diagonal.shape)        
 

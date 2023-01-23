@@ -279,18 +279,19 @@ def main():
     lInstancesProblemCG:list[istanceMCF_CG] = createInstanceMCF_CG(eMatrixs=eMatrixs)
     #for i in range(10):
     listofListPoint = []
-    for i in range(10):
-        for instance in lInstancesProblemCG:
-            listofListPoint.append(
-                conjugateGradient(
-                    A=instance.A,
-                    b=np.transpose(instance.vectorOfb),
-                    x=np.zeros((instance.A.shape[0],1)),
-                    n=100
-                )
-            ) 
-            plt.plot(listofListPoint[i].listX,listofListPoint[i].listY, label = f'iteration{i}')
-    
+    i:int = 0
+    for instance in lInstancesProblemCG:
+        listofListPoint.append(
+            conjugateGradient(
+                A=instance.A,
+                b=np.transpose(instance.vectorOfb),
+                x=np.zeros((instance.A.shape[0],1)),
+                n=100
+            )
+        ) 
+        plt.plot(listofListPoint[i].listX,listofListPoint[i].listY, label = f'iteration{i}')
+        i = i + 1
+
     if(ACTIVE_DRAW_GRAPH == 1):
         plt.xlabel('X-axis')
         plt.ylabel('Y-axis')

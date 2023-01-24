@@ -40,7 +40,7 @@ class Node():
     def __str__(self) -> str:
         return f"n Name: {self.name}, Deficit: {self.deficit}"
 class IncidenceMatrix():
-    m:np.array = np.array([])
+    m:np.darray = np.darray([])
     arches:dict = {} #the key is the source-destination and the value is the Arch object 
     nodes:list = []
     nRow:int
@@ -70,10 +70,10 @@ class IncidenceMatrix():
 # this class rapresents a list of istances of problem MCF for CG algorithm
 # A*x = vectorOfB
 class istanceMCF_CG:
-    A:np.matrix #E*D^-1*Et
-    EMatrix:np.matrix
-    diagonalMatrix:np.matrix
-    vectorOfB:np.array
+    A:np.darray #E*D^-1*Et
+    EMatrix:np.darray
+    diagonalMatrix:np.darray
+    vectorOfB:np.darray
 
 class listOfPointsXY:
     listX:list[int]
@@ -87,25 +87,29 @@ def creationDir(nameDir:str):
         os.makedirs(nameDir)
 # This function builds a diagonal positive Matrix and returns it
 # @param nRow: the number of rows
-# @param nColl: the number of collums
-def diagonalM(nRow:int, nColl:int) -> np.matrix:
-    gen:np.random = np.random
-    m:np.array;
-    s:np.array = np.array([])
+# @param nColl: the number of columns
+def diagonalM(nRow:int, nCols:int) -> np.darray:
+        return np.diag(np.random.rand(nRow,nCols))
 
-    for i in range(nRow):
-        for j in range(nColl):    
-            if(j == i):
-                s = np.append(s,[gen.randint(1,10)])
-            else:
-                s = np.append(s,[0])
-            if(j == nColl-1):
-                if(i == 0):
-                    m = s
-                else :
-                    m = np.vstack((m,s))
-                s = np.array([])
-    return np.matrix(m)
+'''
+gen:np.random = np.random
+m:np.array;
+s:np.array = np.array([])
+
+for i in range(nRow):
+    for j in range(nColl):    
+        if(j == i):
+            s = np.append(s,[gen.randint(1,10)])
+        else:
+            s = np.append(s,[0])
+        if(j == nColl-1):
+            if(i == 0):
+                m = s
+            else :
+                m = np.vstack((m,s))
+            s = np.array([])
+return np.matrix(m)
+''' 
 
 # This fuction take 2 params:
 # - A list of Nodes 
@@ -182,24 +186,24 @@ def buildIncidenceMatrix(nodes:list,arches:dict):
     return arrMatrix 
 
 def buildArrayDeficit(listNodes:list) -> np.array:
-    c = np.array([])
+    c = np.darray([])
     for node in listNodes:
-       c = np.append(c,[[node.deficit]])
+       c = c.append([[node.deficit]])
     return c
 def buildArrayCosts(dictArches:dict) -> np.array:
-    b = np.array([])
+    b = np.earray([])
     for key in dictArches.keys():
-       b = np.append(b,[[dictArches[key].cost]])
+       b = b.append([[dictArches[key].cost]])
     return b
 # this function has to calculate the condition Ex = c
 @timeit
-def testConservationRule(incidenceMatrix:np.matrix,c:np.array,x:np.array = np.array([])):
+def testConservationRule(incidenceMatrix:np.darray,c:np.darray,x:np.darray = np.darray([])):
     # det = np.linalg.det(incidenceMatrix)
     # print("det: {det}")
     matrixInv = incidenceMatrix.getI()
     
     print(matrixInv)
-    x = np.matmul(matrixInv,np.transpose(c))
+    x = matrixInv @ c.T
     print(f"\nDIRECT TEST x: {x}\n")
 
 def createInstanceMCF_CG(eMatrixs:list) -> list[istanceMCF_CG]:
@@ -207,15 +211,15 @@ def createInstanceMCF_CG(eMatrixs:list) -> list[istanceMCF_CG]:
     for i in range(len(eMatrixs)):
         istanceMCF = istanceMCF_CG()
         c = buildArrayDeficit(eMatrixs[i].nodes)
-        b = buildArrayCosts(eMatrixs[i].arches)
-        istanceMCF.matrix = np.matrix(eMatrixs[i].m)
+        b = (eMatrixs[i].arches)
+        istanceMCF.matrixbuildArrayCosts = np.darray(eMatrixs[i].m)
         numOfArches:int = istanceMCF.matrix.shape[1]
         # this matrix is m*m that is arches number  
         istanceMCF.diagonalMatrix = diagonalM(numOfArches,numOfArches)
         #E*D^-1*Et
-        istanceMCF.A = np.matmul(np.matmul(istanceMCF.matrix,istanceMCF.diagonalMatrix.getI()),istanceMCF.matrix.getT())
+        istanceMCF.A = (istanceMCF.matrix @ istanceMCF.diagonalMatrix.getI()) @ istanceMCF.matrix.getT()
         #It's all values w
-        istanceMCF.vectorOfb = np.matmul(np.matmul(istanceMCF.matrix,istanceMCF.diagonalMatrix.getI()),b) - c
+        istanceMCF.vectorOfb = ((istanceMCF.matrix @ istanceMCF.diagonalMatrix.getI()) @ b ) - c
         istancesProblem.append(istanceMCF)
     return istancesProblem
     
@@ -225,7 +229,7 @@ def createInstanceMCF_CG(eMatrixs:list) -> list[istanceMCF_CG]:
 # x0 is the starting point
 # n is the number of iterations of the algorithm
 @timeit
-def conjugateGradient(A:np.matrix, b:np.array, x:np.array, n:int) ->listOfPointsXY:
+def conjugateGradient(A:np.darray, b:np.darray, x:np.darray, n:int) ->listOfPointsXY:
     w = open(os.path.join(PATH_DIRECTORY_OUTPUT,f"{NAME_FILE_SOLUTION}.txt"), "w")
     xGraph:list[int] = [] # number of iteration
     yGraph:list[int] = [] # difference between real b and artificial b
@@ -238,26 +242,26 @@ def conjugateGradient(A:np.matrix, b:np.array, x:np.array, n:int) ->listOfPoints
         print(f"dim A: {A.shape}, dim b: {b.shape}")
         print('-------------------------------------\n')
         return
-    r:np.array = np.copy(b)# - A*x0 # residual Ax - b
+    r:np.ffarray = np.copy(b)# - A*x0 # residual Ax - b
     d = np.copy(r) # directions vector
-    alpha = np.array([])
-    beta = np.array([])
+    alpha = np.darray([])
+    beta = np.darray([])
     # print(f"r: {r}")
     # print(f"A.dimensions {A.shape}")
     proveB:int
     for j in range(n):
-        numAlpha = np.matmul(np.transpose(r),r)
-        denAlpha = np.matmul(np.transpose(d),np.matmul(A,d))
+        numAlpha = r.T @ r 
+        denAlpha = d.T @ (A @ d)
 
         alpha = np.append(alpha,numAlpha/denAlpha)
         #print(f"alpha{j}:{alpha[j]}")
         x = x + alpha[j]*d
         xGraph.append(j)
-        proveB =  np.matmul(A,x)
+        proveB =  A @ x
         proveBNorm = np.linalg.norm(b - proveB)/np.linalg.norm(proveB) 
         yGraph.append(proveBNorm)
         r = r - alpha[j]*(A*d)
-        beta = np.append(beta,np.matmul(np.transpose(r),r)/numAlpha)
+        beta = np.append(beta,(r.T @ r)/numAlpha)
         d = r + beta[j]*d
     # print(f"x : {xGraph}")
     # print(f"y : {yGraph}")

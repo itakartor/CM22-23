@@ -6,8 +6,8 @@ import time
 import matplotlib.pyplot as plt
 
 
-PATH_DIRECTORY_TEST = ".\\testAnalyze"
-PATH_DIRECTORY_OUTPUT = ".\\outputMatrix"
+PATH_DIRECTORY_TEST = "./testAnalyze"
+PATH_DIRECTORY_OUTPUT = "./outputMatrix"
 NAME_FILE_MATRIX_INCIDENCE = "incidenceMatrix"
 NAME_FILE_SOLUTION = "xSolutionVector"
 NAME_FILE_TIME = "times"
@@ -40,7 +40,7 @@ class Node():
     def __str__(self) -> str:
         return f"n Name: {self.name}, Deficit: {self.deficit}"
 class IncidenceMatrix():
-    m:np.darray = np.darray([])
+    m:np.ndarray = np.ndarray([])
     arches:dict = {} #the key is the source-destination and the value is the Arch object 
     nodes:list = []
     nRow:int
@@ -70,10 +70,10 @@ class IncidenceMatrix():
 # this class rapresents a list of istances of problem MCF for CG algorithm
 # A*x = vectorOfB
 class istanceMCF_CG:
-    A:np.darray #E*D^-1*Et
-    EMatrix:np.darray
-    diagonalMatrix:np.darray
-    vectorOfB:np.darray
+    A:np.ndarray #E*D^-1*Et
+    EMatrix:np.ndarray
+    diagonalMatrix:np.ndarray
+    vectorOfB:np.ndarray
 
 class listOfPointsXY:
     listX:list[int]
@@ -88,8 +88,8 @@ def creationDir(nameDir:str):
 # This function builds a diagonal positive Matrix and returns it
 # @param nRow: the number of rows
 # @param nColl: the number of columns
-def diagonalM(nRow:int, nCols:int) -> np.darray:
-        return np.diag(np.random.rand(nRow,nCols))
+def diagonalM(nRow:int, nCols:int) -> np.ndarray:
+        return np.diag(np.random.rand(1,nCols)[0])
 
 '''
 gen:np.random = np.random
@@ -186,18 +186,18 @@ def buildIncidenceMatrix(nodes:list,arches:dict):
     return arrMatrix 
 
 def buildArrayDeficit(listNodes:list) -> np.array:
-    c = np.darray([])
+    c = np.array([])
     for node in listNodes:
-       c = c.append([[node.deficit]])
+        c = np.append(c,[[node.deficit]])
     return c
 def buildArrayCosts(dictArches:dict) -> np.array:
-    b = np.earray([])
+    b = np.array([])
     for key in dictArches.keys():
-       b = b.append([[dictArches[key].cost]])
+       b = np.append(b,[[dictArches[key].cost]])
     return b
 # this function has to calculate the condition Ex = c
 @timeit
-def testConservationRule(incidenceMatrix:np.darray,c:np.darray,x:np.darray = np.darray([])):
+def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray,x:np.ndarray = np.ndarray([])):
     # det = np.linalg.det(incidenceMatrix)
     # print("det: {det}")
     matrixInv = incidenceMatrix.getI()
@@ -211,15 +211,15 @@ def createInstanceMCF_CG(eMatrixs:list) -> list[istanceMCF_CG]:
     for i in range(len(eMatrixs)):
         istanceMCF = istanceMCF_CG()
         c = buildArrayDeficit(eMatrixs[i].nodes)
-        b = (eMatrixs[i].arches)
-        istanceMCF.matrixbuildArrayCosts = np.darray(eMatrixs[i].m)
+        b = buildArrayCosts(eMatrixs[i].arches)
+        istanceMCF.matrix = eMatrixs[i].m
         numOfArches:int = istanceMCF.matrix.shape[1]
         # this matrix is m*m that is arches number  
         istanceMCF.diagonalMatrix = diagonalM(numOfArches,numOfArches)
         #E*D^-1*Et
-        istanceMCF.A = (istanceMCF.matrix @ istanceMCF.diagonalMatrix.getI()) @ istanceMCF.matrix.getT()
+        istanceMCF.A = (istanceMCF.matrix @ np.linalg.inv(istanceMCF.diagonalMatrix)) @ istanceMCF.matrix.T
         #It's all values w
-        istanceMCF.vectorOfb = ((istanceMCF.matrix @ istanceMCF.diagonalMatrix.getI()) @ b ) - c
+        istanceMCF.vectorOfb = ((istanceMCF.matrix @ np.linalg.inv(istanceMCF.diagonalMatrix)) @ b ) - c
         istancesProblem.append(istanceMCF)
     return istancesProblem
     
@@ -229,7 +229,7 @@ def createInstanceMCF_CG(eMatrixs:list) -> list[istanceMCF_CG]:
 # x0 is the starting point
 # n is the number of iterations of the algorithm
 @timeit
-def conjugateGradient(A:np.darray, b:np.darray, x:np.darray, n:int) ->listOfPointsXY:
+def conjugateGradient(A:np.ndarray, b:np.ndarray, x:np.ndarray, n:int) ->listOfPointsXY:
     w = open(os.path.join(PATH_DIRECTORY_OUTPUT,f"{NAME_FILE_SOLUTION}.txt"), "w")
     xGraph:list[int] = [] # number of iteration
     yGraph:list[int] = [] # difference between real b and artificial b
@@ -242,10 +242,10 @@ def conjugateGradient(A:np.darray, b:np.darray, x:np.darray, n:int) ->listOfPoin
         print(f"dim A: {A.shape}, dim b: {b.shape}")
         print('-------------------------------------\n')
         return
-    r:np.ffarray = np.copy(b)# - A*x0 # residual Ax - b
+    r:np.array = np.copy(b)# - A*x0 # residual Ax - b
     d = np.copy(r) # directions vector
-    alpha = np.darray([])
-    beta = np.darray([])
+    alpha = np.array([])
+    beta = np.array([])
     # print(f"r: {r}")
     # print(f"A.dimensions {A.shape}")
     proveB:int

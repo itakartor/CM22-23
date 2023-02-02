@@ -26,12 +26,10 @@ class ConjugateGradient:
     def __init__(self,eMatrixs:list[IncidenceMatrix]):
         self.listIstancesProblem:list = []
         self.listofPoints:list=[]
-        print(f"lunghezza {len(eMatrixs)}")
+        # print(f"lunghezza {len(eMatrixs)}")
         for i in range(len(eMatrixs)):
-            print(i)
             istanceMCF = istanceMCF_CG()
             c = self.buildArrayDeficit(eMatrixs[i].nodes)
-            print(eMatrixs[i].nodes)
             b = self.buildArrayCosts(eMatrixs[i].arches)
             istanceMCF.matrix = eMatrixs[i].m
             numOfArches:int = istanceMCF.matrix.shape[1]
@@ -40,20 +38,12 @@ class ConjugateGradient:
             #E*D^-1*Et
             istanceMCF.A = (istanceMCF.matrix @ np.linalg.inv(istanceMCF.diagonalMatrix)) @ istanceMCF.matrix.T
             #It's all values w
-            print(istanceMCF.matrix.shape)
-            print(istanceMCF.diagonalMatrix.shape)
-            print(b.shape)
-            print(c.shape)
-            print(c)
-
             istanceMCF.vectorOfb = ((istanceMCF.matrix @ np.linalg.inv(istanceMCF.diagonalMatrix)) @ b ) - c
             self.listIstancesProblem.append(istanceMCF)
 
     def buildArrayDeficit(self,listNodes:list) -> np.array:
         c = np.array([])
-        print('!!!!!!!!!!!!!!!!!!!')
         for node in listNodes:
-            print(node)
             c = np.append(c,[[node.deficit]])
         return c
     
@@ -69,7 +59,7 @@ class ConjugateGradient:
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     @util.timeit
-    def getListPointCG(A:np.ndarray, b:np.ndarray, x:np.ndarray, n:int,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION) ->listOfPointsXY:
+    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x:np.ndarray, n:int,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION) ->listOfPointsXY:
         w = open(os.path.join(path_output,f"{solution_file}.txt"), "w")
         xGraph:list[int] = [] # number of iteration
         yGraph:list[int] = [] # difference between real b and artificial b
@@ -90,15 +80,18 @@ class ConjugateGradient:
         # print(f"A.dimensions {A.shape}")
         proveB:int
         for j in range(n):
-            numAlpha = r.T @ r 
-            denAlpha = d.T @ (A @ d)
+            numAlpha:float = r.T @ r 
+            denAlpha:float = d.T @ (A @ d)
 
-            alpha = np.append(alpha,numAlpha/denAlpha)
+            alpha = np.append(alpha,[numAlpha/denAlpha])
             #print(f"alpha{j}:{alpha[j]}")
+            print(x.shape)
+            print(alpha.shape)
+
             x = x + alpha[j]*d
             xGraph.append(j)
             proveB =  A @ x
-            proveBNorm = np.linalg.norm(b - proveB)/np.linalg.norm(proveB) 
+            proveBNorm:float = np.linalg.norm(b - proveB)/np.linalg.norm(proveB) 
             yGraph.append(proveBNorm)
             r = r - alpha[j]*(A*d)
             beta = np.append(beta,(r.T @ r)/numAlpha)
@@ -107,10 +100,10 @@ class ConjugateGradient:
         # print(f"y : {yGraph}")
         listPoints.listX.extend(xGraph)
         listPoints.listY.extend(yGraph)
-        w.write(f"A*x = b")
+        w.write(f"A*x = b\n")
         w.write(f"Shape of A:{A.shape}\n A:\n{A}\n")
         w.write(f"Shape of x:{x.shape}\n CG x:\n{x}\n")
-        w.write(f"Shape of x:{b.shape}\n CG b:\n{b}\n")
+        w.write(f"Shape of b:{b.shape}\n CG b:\n{b}\n")
         w.write(f"Shape of proveB:{proveB.shape}\n CG proveB:\n{proveB}\n")
         w.write(f"CG proveBNorm:{proveBNorm}\n")
         
@@ -118,6 +111,7 @@ class ConjugateGradient:
         return listPoints
     
     #compute the conjugate algorithm for all the problem instances
+    @util.timeit
     def start_CG(self,draw_graph=configs.ACTIVE_DRAW_GRAPH):
         i:int =1
         for instance in self.listIstancesProblem:
@@ -125,7 +119,7 @@ class ConjugateGradient:
                 A=instance.A,
                 b=np.transpose(instance.vectorOfb),
                 x=np.zeros((instance.A.shape[0],1)),
-                n=100
+                n=20
             )
             if draw_graph:
                 plt.plot(points.listX,points.listY, label = f'iteration{i}')

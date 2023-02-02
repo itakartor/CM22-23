@@ -1,6 +1,8 @@
-from incidenceMatrix import IncidenceMatrix as im
-import conjugateGradient as CG
+from IncidenceMatrix import IncidenceMatrix as im
+from ConjugateGradient import ConjugateGradient as CG
 
-eMatrix=im()
-conjugate=CG([im])
-conjugate.start_cg()
+listEMatrix:im=im()
+
+listEMatrix = listEMatrix.buildIncidenceMatrix()
+conjugate = CG(listEMatrix)
+conjugate.start_CG()

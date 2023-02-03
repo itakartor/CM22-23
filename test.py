@@ -1,5 +1,5 @@
-from IncidenceMatrix import IncidenceMatrix as im
-from ConjugateGradient import ConjugateGradient as CG
+from incidenceMatrix import IncidenceMatrix as im
+from conjugateGradient import ConjugateGradient as CG
 
 listEMatrix:im=im()
 

@@ -1,4 +1,4 @@
-from IncidenceMatrix import IncidenceMatrix
+from incidenceMatrix import IncidenceMatrix
 import util
 import os
 import numpy as np
@@ -23,6 +23,7 @@ class ConjugateGradient:
     listIstancesProblem:list[istanceMCF_CG] = []
     listofListPoints:list[listOfPointsXY] = []
     #initialize istance of the problems  with incidence matrixis 
+
     def __init__(self,eMatrixs:list[IncidenceMatrix]):
         self.listIstancesProblem:list = []
         self.listofPoints:list=[]
@@ -72,10 +73,10 @@ class ConjugateGradient:
             print(f"dim A: {A.shape}, dim b: {b.shape}")
             print('-------------------------------------\n')
             return listPoints
-        r:np.array = np.copy(b)# - A*x0 # residual Ax - b
-        d = np.copy(r) # directions vector
-        alpha = np.array([])
-        beta = np.array([])
+        r:np.array = np.reshape(np.copy(b),(4,1))# - A*x0 # residual Ax - b
+        d = np.reshape(np.copy(r),(4,1)) # directions vector
+        alpha:float=0
+        beta:float=0
         # print(f"r: {r}")
         # print(f"A.dimensions {A.shape}")
         proveB:int
@@ -83,19 +84,22 @@ class ConjugateGradient:
             numAlpha:float = r.T @ r 
             denAlpha:float = d.T @ (A @ d)
 
-            alpha = np.append(alpha,[numAlpha/denAlpha])
+            # Sostituito 
+            #   alpha = np.append(alpha,numAlpha/denAlpha)
+            alpha=numAlpha/denAlpha
             #print(f"alpha{j}:{alpha[j]}")
             print(x.shape)
-            print(alpha.shape)
-
-            x = x + alpha[j]*d
+            #print(alpha.shape)
+            x = x + alpha * d
             xGraph.append(j)
             proveB =  A @ x
             proveBNorm:float = np.linalg.norm(b - proveB)/np.linalg.norm(proveB) 
             yGraph.append(proveBNorm)
-            r = r - alpha[j]*(A*d)
-            beta = np.append(beta,(r.T @ r)/numAlpha)
-            d = r + beta[j]*d
+            # + o meno?
+            r = r - alpha *( A @ d)
+            #sostistituito beta = np.append(beta,(r.T @ r)/numAlpha)
+            beta= r.T @ r / numAlpha
+            d = r + beta * d
         # print(f"x : {xGraph}")
         # print(f"y : {yGraph}")
         listPoints.listX.extend(xGraph)
@@ -121,6 +125,12 @@ class ConjugateGradient:
                 x=np.zeros((instance.A.shape[0],1)),
                 n=20
             )
+            self.algoritmo2(
+                A=instance.A,
+                b=instance.vectorOfb,
+                x=np.zeros((instance.A.shape[0],1)),
+                n=20
+            )
             if draw_graph:
                 plt.plot(points.listX,points.listY, label = f'iteration{i}')
                 i += 1
@@ -134,3 +144,24 @@ class ConjugateGradient:
             plt.show()
         return self.listofPoints
 
+    #https://towardsdatascience.com/complete-step-by-step-conjugate-gradient-algorithm-from-scratch-202c07fb52a8
+    def algoritmo2(self,A:np.ndarray, b:np.ndarray, x:np.ndarray, n:int,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION) ->np.array:
+        r:np.ndarray = (A @ x) -np.reshape(b,(4,1))
+        p:np.array = -r
+        r_norm:float= np.linalg.norm(r)
+        x_points:list=[x]
+        for k in range(n):
+            ap = A @ p
+            rr = r.T @ r
+            alpha = rr  / (p.T @ ap)
+            x = x + alpha * p
+            r = r + alpha * ap
+            beta = (r.T @ r) / rr
+            p = -r + beta * p
+            x_points.append(x)
+            r_norm=np.linalg.norm(r)
+            print('Iteration: {} \t x = {} \t residual = {}'.
+              format(k, x, r_norm))
+
+        print(f"Solution x= {x}")
+        return x_points

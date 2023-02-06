@@ -5,4 +5,4 @@ listEMatrix:im=im()
 
 listEMatrix = listEMatrix.buildIncidenceMatrix()
 conjugate = CG(listEMatrix)
-conjugate.start_CG()
+conjugate.start_CG(numIteration=20)

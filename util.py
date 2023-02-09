@@ -39,3 +39,15 @@ def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray,x:np.ndarray = 
     print(matrixInv)
     x = matrixInv @ c.T
     print(f"\nDIRECT TEST x: {x}\n")
+@timeit
+def invSimpleDiag(D:np.ndarray):
+    for i in range(D.shape[0]):
+        D[i][i] = 1/D[i][i]
+    return D
+# it's not optimized then it's better to use @ operator for matMul
+# @timeit
+# def productSimpleMatD(A:np.ndarray,D:np.ndarray) -> np.ndarray:
+#     for j in range(A.shape[1]):
+#         for i in range(A.shape[0]):
+#             A[j][i] = A[j][i]*D[j][j]
+#     return A

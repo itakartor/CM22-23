@@ -1,0 +1,11 @@
+nice
+
+foreach a ( 4 8 )
+foreach b ( 4 8 16 )
+foreach c ( 100 500 )
+
+genrmf -out $a-$b-$c -a $a -b $b -c1 0 -c2 $c -cost 100 -dem 1000 -seed 3141592
+
+end
+end
+end

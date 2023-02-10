@@ -1,0 +1,48 @@
+#/bin/tcsh
+
+# 8*
+for j in 8 16 32
+do
+for h in 1 2 3 4 5
+do
+
+src/goto < param/pargoto8_${j}_${h}.net > dmx/goto8_${j}_${h}.dmx
+
+done
+done
+
+# 10*
+for j in 8 32 64
+do
+for h in 1 2 3 4 5
+do
+
+src/goto < param/pargoto10_${j}_${h}.net > dmx/goto10_${j}_${h}.dmx
+
+done
+done
+
+# 12 - 14*
+for i in 12 14
+do
+for j in 8 64 256
+do
+for h in 1 2 3 4 5
+do
+
+src/goto < param/pargoto${i}_${j}_${h}.net > dmx/goto${i}_${j}_${h}.dmx
+
+done
+done
+done
+
+# 16*
+for j in 8 64 1024
+do
+for h in 1 2 3 4 5
+do
+
+src/goto < param/pargoto16_${j}_${h}.net > dmx/goto16_${j}_${h}.dmx
+
+done
+done

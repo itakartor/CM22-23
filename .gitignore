@@ -1,3 +1,5 @@
 env
 graphGenerators
 __pycache__
+**/*.dmx
+**/dmx/

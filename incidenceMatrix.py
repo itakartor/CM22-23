@@ -18,7 +18,7 @@ class Node():
 
 class IncidenceMatrix():
     m:np.ndarray = np.ndarray([])
-    arches:dict = {} #the key is the source-destination and the value is the Arch object 
+    arcs:dict = {} #the key is the source-destination and the value is the Arch object 
     nodes:list = []
     nRow:int
     nColl:int
@@ -46,10 +46,10 @@ class IncidenceMatrix():
     
     # This fuction take 2 params:
     # - A list of Nodes 
-    # - A dictionary of Arches
+    # - A dictionary of arcs
     def __init__(self):
         self.m:np.ndarray = np.ndarray(None)
-        self.arches:dict = {}    #the key is the source-destination and the value is the Arch object 
+        self.arcs:dict = {}    #the key is the source-destination and the value is the Arch object 
         self.nodes:list = []
         self.nRow:int = -1
         self.nColl:int = -1
@@ -63,7 +63,7 @@ class IncidenceMatrix():
         self.seed:int = -1
     
     def buildIncidenceMatrix( self,
-            nodes:list=[],arches:dict={},
+            nodes:list=[],arcs:dict={},
             path_test=configs.PATH_DIRECTORY_TEST,path_output=configs.PATH_DIRECTORY_OUTPUT,
             matrix_file=configs.NAME_FILE_MATRIX_INCIDENCE
         ) ->list:
@@ -96,7 +96,7 @@ class IncidenceMatrix():
                             matrix.totDeficit = int(line[len(line)-2])
                         elif(" seed " in line):
                             matrix.seed = int(line[len(line)-2])        
-                    # in line with p there is number of nodes and arches
+                    # in line with p there is number of nodes and arcs
                     # but it has to verify
                     case "p":
                         arrValue = line.split(" ")
@@ -116,7 +116,7 @@ class IncidenceMatrix():
 
                         arch.maxCapacity = int(values[4])
                         arch.cost = int(values[5])
-                        arches[f'{arch.source}-{arch.destination}'] = arch
+                        arcs[f'{arch.source}-{arch.destination}'] = arch
                     case "n":
                         values = line.split()
                         node:Node = Node()
@@ -129,9 +129,9 @@ class IncidenceMatrix():
             # print("++++++++++++++++++")
             # [print(nodes[i]) for i in range(len(nodes))]
             # print("++++++++++++++++++++++")
-            # [print(arches[i]) for i in range(len(arches))]
+            # [print(arcs[i]) for i in range(len(arcs))]
             matrix.nodes.extend(nodes)
-            matrix.arches.update(arches)
+            matrix.arcs.update(arcs)
             retArrMatrix.append(matrix)
             w.close()
             r.close()

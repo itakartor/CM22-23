@@ -1,62 +1,53 @@
-from incidenceMatrix import IncidenceMatrix
-from util import *
 import os
 import numpy as np
-import configs
-import matplotlib as plt
+from incidenceMatrix import IncidenceMatrix
 
-class istanceMCF_CG:
-    A:np.ndarray #E*D^-1*Et
+import configs
+from util import diagonalM, listOfPointsXY, timeit
+
+
+class istanceMCF_MINRES: # A * x = d
+    # x^T = [x,y] d^T = [b,c]
+    A:np.ndarray #[D E^T][x] = [b]
+                 #[E  0][y] = [c]
     EMatrix:np.ndarray
     diagonalMatrix:np.ndarray
     vectorOfB:np.ndarray
 
-# it's a list of the instances of the CG problems
-class ConjugateGradient:
-    listIstancesProblem:list[istanceMCF_CG] = []
+class MINRES:
+    listIstancesProblem:list[istanceMCF_MINRES] = []
     listofListPoints:list[listOfPointsXY] = []
-    #initialize istance of the problems  with incidence matrixis 
-
+    
     def __init__(self,eMatrices:list[IncidenceMatrix]):
         self.listIstancesProblem:list = []
         self.listofPoints:list=[]
-        # print(f"lunghezza {len(eMatrices)}")
         for i in range(len(eMatrices)):
-            istanceMCF = istanceMCF_CG()
-            c = self.buildArrayDeficit(eMatrices[i].nodes)
-            b = self.buildArrayCosts(eMatrices[i].arcs)
+            istanceMCF = istanceMCF_MINRES()
+            istanceMCF.vectorOfb = self.buildDVector(eMatrices[i].nodes,eMatrices[i].arcs)
             istanceMCF.matrix = eMatrices[i].m
-            numOfarcs:int = istanceMCF.matrix.shape[1]
-            # this matrix is m*m that is arcs number  
-            istanceMCF.diagonalMatrix = diagonalM(numOfarcs,numOfarcs)
-            
-            #E*D^-1
-            matrix_diagInv = istanceMCF.matrix @ invSimpleDiag(istanceMCF.diagonalMatrix)
-            #E*D^-1*Et
-            istanceMCF.A = matrix_diagInv @ istanceMCF.matrix.T
-            #It's all values w
-            istanceMCF.vectorOfb = (matrix_diagInv @ b ) - c
+            numOfArches:int = istanceMCF.matrix.shape[1]
+            # this matrix is m*m that is arches number  
+            istanceMCF.diagonalMatrix = diagonalM(numOfArches,numOfArches)
+            istanceMCF.A = np.block([
+                    [istanceMCF.diagonalMatrix, istanceMCF.EMatrix.T],
+                    [istanceMCF.EMatrix, np.zeros((len(eMatrices[i].nodes),len(eMatrices[i].nodes)))]
+                ])
             self.listIstancesProblem.append(istanceMCF)
-
-    def buildArrayDeficit(self,listNodes:list) -> np.array:
-        c = np.array([])
-        for node in listNodes:
-            c = np.append(c,[[node.deficit]])
-        return c
     
-    def buildArrayCosts(self,dictArcs:dict) -> np.array:
-        b = np.array([])
+    def buildDVector(self,listNodes:list,dictArcs:dict):
+        d = np.array([])
+        for node in listNodes:
+            d = np.append(d,[[node.deficit]])
         for key in dictArcs.keys():
-            b = np.append(b,[[dictArcs[key].cost]])
-        return b
-
+            d = np.append(d,[[dictArcs[key].cost]])
+        return d
     # algorithm
     # A is a matrix of system Ax = b
     # b is a vector of system Ax = b
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     @timeit
-    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x:np.ndarray,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION,numIteration=100) ->listOfPointsXY:
+    def getListPointMINRES(self,A:np.ndarray, b:np.ndarray, x0:np.ndarray,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION,numIteration=100) ->listOfPointsXY:
         w = open(os.path.join(path_output,f"{solution_file}.txt"), "w")
         xGraph:list[int] = [] # number of iteration
         yGraph:list[int] = [] # difference between real b and artificial b
@@ -64,17 +55,22 @@ class ConjugateGradient:
         listPoints.listX = []
         listPoints.listY = []
         if(A.shape[1] != b.shape[0]):
-            print('\n-------------------------------------')
-            print("ERROR on dimension")
-            print(f"dim A: {A.shape}, dim b: {b.shape}")
-            print('-------------------------------------\n')
+            w.write('\n-------------------------------------')
+            w.write("ERROR on dimension")
+            w.write(f"dim A: {A.shape}, dim b: {b.shape}")
+            w.write('-------------------------------------\n')
             return listPoints
-        r:np.ndarray = np.reshape(np.copy(b),(4,1))# - A*x0 # residual Ax - b
-        d:np.ndarray = r # directions vector
+        x:np.ndarray = x0
+        r:np.ndarray = np.reshape(np.copy(b - A @ x0),(4,1)) # - A*x0 # residual Ax - b
+        d0:np.ndarray = r # directions vector
+        s0:np.ndarray = A @ d0
+        d1:np.ndarray = d0
+        s1:np.ndarray = s0
         alpha:float = 0
         beta:float = 0
         proveB:float
         for j in range(numIteration):
+            
             Ad:np.ndarray = A @ d
             numAlpha:float = r.T @ r # this uses old r
             denAlpha:float = d.T @ Ad
@@ -125,5 +121,3 @@ class ConjugateGradient:
             plt.legend()
             plt.show()
         return self.listofPoints
-
-    #https://towardsdatascience.com/complete-step-by-step-conjugate-gradient-algorithm-from-scratch-202c07fb52a8

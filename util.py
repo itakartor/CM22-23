@@ -4,6 +4,9 @@ import time
 from functools import wraps
 import numpy as np
 
+class listOfPointsXY:
+    listX:list[int]
+    listY:list[int]
 
 def timeit(func):
     @wraps(func)

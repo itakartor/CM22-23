@@ -42,6 +42,7 @@ class MINRES:
             d = np.append(d,[[node.deficit]])
         for key in dictArcs.keys():
             d = np.append(d,[[dictArcs[key].cost]])
+        d = np.reshape(d,(1,d.shape[0]))
         return d
     
     # algorithm
@@ -69,10 +70,11 @@ class MINRES:
             w.write('-------------------------------------\n')
             return listPoints
         x:np.ndarray = x0
-        print(f"{A.shape}")
-        print(f"{x0.shape}")
+        print(f"A: {A.shape}")
+        print(f"x0: {x0.shape}")
+        print(f"b: {b.shape}")
         r:np.ndarray = b - A @ x0 # - A*x0 # residual Ax - b
-        print(f"{r.shape}")
+        print(f"r: {r.shape}")
         d0:np.ndarray = r # first directions vector
         q0:np.ndarray = A @ d0
         d1:np.ndarray = d0

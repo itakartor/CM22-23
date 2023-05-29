@@ -20,7 +20,6 @@ class MINRES:
     listofListPoints:list[listOfPointsXY] = []
     
     def __init__(self,eMatrices:list[IncidenceMatrix]):
-        print(len(eMatrices))
         self.listIstancesProblem:list = []
         self.listofPoints:list=[]
         for i in range(len(eMatrices)):
@@ -52,11 +51,10 @@ class MINRES:
     # n is the number of iterations of the algorithm
     # tol is the tollerance for break the cycle of the algorithm
     @timeit
-    def getListPointMINRES(self,A:np.ndarray, b:np.ndarray, 
-                           x0:np.ndarray,tol:float,
+    def getListPointMINRES(self,numIteration:int,tol:float,A:np.ndarray, b:np.ndarray, 
+                           x0:np.ndarray,
                            path_output:str=configs.PATH_DIRECTORY_OUTPUT,
-                           solution_file:str=configs.NAME_FILE_SOLUTION_MINRES,
-                           numIteration:int=100) ->listOfPointsXY:
+                           solution_file:str=configs.NAME_FILE_SOLUTION_MINRES) ->listOfPointsXY:
         w = open(os.path.join(path_output,f"{solution_file}.txt"), "w")
         xGraph:list[int] = [] # number of iteration
         yGraph:list[int] = [] # difference between real b and artificial b
@@ -70,11 +68,7 @@ class MINRES:
             w.write('-------------------------------------\n')
             return listPoints
         x:np.ndarray = x0
-        print(f"A: {A.shape}")
-        print(f"x0: {x0.shape}")
-        print(f"b: {b.shape}")
         r:np.ndarray = b - A @ x0 # - A*x0 # residual Ax - b
-        print(f"r: {r.shape}")
         d0:np.ndarray = r # first directions vector
         q0:np.ndarray = A @ d0
         d1:np.ndarray = d0
@@ -101,12 +95,10 @@ class MINRES:
             xGraph.append(j)
             proveB =  A @ x
             proveBNorm:float = np.linalg.norm(b - proveB)/np.linalg.norm(proveB) 
-            yGraph.append(proveBNorm)
             # update r
             r = r - alpha * q1
-            print(f'{r.shape[0]}, {r.shape[1]}')
             retTol = r.T @ r
-            #print(retTol)
+            yGraph.append(retTol[0][0])
             if(retTol < tol*tol):
                 break
             d0 = q1
@@ -132,15 +124,15 @@ class MINRES:
 
     #compute the conjugate algorithm for all the problem instances
     @timeit
-    def start_MINRES(self,draw_graph=configs.ACTIVE_DRAW_GRAPH, numIteration:int=100):
+    def start_MINRES(self,draw_graph=configs.ACTIVE_DRAW_GRAPH, numIteration:int=20,tol:float = 1e-3):
         i:int =1
         for instance in self.listIstancesProblem:
             points:listOfPointsXY = self.getListPointMINRES(
+                numIteration,
+                tol,
                 A=instance.A,
                 b=np.transpose(instance.vectorOfb),
-                x0=np.zeros((instance.A.shape[0],1)),
-                tol=0.000001,
-                numIteration=20
+                x0=np.zeros((instance.A.shape[0],1))
             )
             if draw_graph:
                 plt.plot(points.listX,points.listY, label = f'iteration{i}')

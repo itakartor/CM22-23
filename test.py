@@ -30,4 +30,4 @@ listEMatrix:im=im()
 
 listEMatrix = listEMatrix.buildIncidenceMatrix()
 minres = MINRES(listEMatrix)
-minres.start_MINRES(numIteration=20)
+minres.start_MINRES(numIteration=1000,tol=1e-5)

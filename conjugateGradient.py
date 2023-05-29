@@ -1,9 +1,11 @@
 from incidenceMatrix import IncidenceMatrix
-from util import *
+
 import os
 import numpy as np
 import configs
 import matplotlib as plt
+
+from util import diagonalM, invSimpleDiag, listOfPointsXY, timeit
 
 class istanceMCF_CG:
     A:np.ndarray #E*D^-1*Et
@@ -25,15 +27,15 @@ class ConjugateGradient:
             istanceMCF = istanceMCF_CG()
             c = self.buildArrayDeficit(eMatrices[i].nodes)
             b = self.buildArrayCosts(eMatrices[i].arcs)
-            istanceMCF.matrix = eMatrices[i].m
-            numOfarcs:int = istanceMCF.matrix.shape[1]
+            istanceMCF.EMatrix = eMatrices[i].m
+            numOfarcs:int = istanceMCF.EMatrix.shape[1]
             # this matrix is m*m that is arcs number  
             istanceMCF.diagonalMatrix = diagonalM(numOfarcs,numOfarcs)
             
             #E*D^-1
-            matrix_diagInv = istanceMCF.matrix @ invSimpleDiag(istanceMCF.diagonalMatrix)
+            matrix_diagInv = istanceMCF.EMatrix @ invSimpleDiag(istanceMCF.diagonalMatrix)
             #E*D^-1*Et
-            istanceMCF.A = matrix_diagInv @ istanceMCF.matrix.T
+            istanceMCF.A = matrix_diagInv @ istanceMCF.EMatrix.T
             #It's all values w
             istanceMCF.vectorOfb = (matrix_diagInv @ b ) - c
             self.listIstancesProblem.append(istanceMCF)
@@ -56,7 +58,7 @@ class ConjugateGradient:
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     @timeit
-    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x:np.ndarray,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION,numIteration=100) ->listOfPointsXY:
+    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x:np.ndarray,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100) ->listOfPointsXY:
         w = open(os.path.join(path_output,f"{solution_file}.txt"), "w")
         xGraph:list[int] = [] # number of iteration
         yGraph:list[int] = [] # difference between real b and artificial b
@@ -69,7 +71,7 @@ class ConjugateGradient:
             print(f"dim A: {A.shape}, dim b: {b.shape}")
             print('-------------------------------------\n')
             return listPoints
-        r:np.ndarray = np.reshape(np.copy(b),(4,1))# - A*x0 # residual Ax - b
+        r:np.ndarray = np.reshape(np.copy(b),(A.shape[1],1))# - A*x0 # residual Ax - b
         d:np.ndarray = r # directions vector
         alpha:float = 0
         beta:float = 0
@@ -92,7 +94,7 @@ class ConjugateGradient:
             d = r + beta * d
         listPoints.listX.extend(xGraph)
         listPoints.listY.extend(yGraph)
-        w.write(f"A*x = b\n")
+        w.write("A*x = b\n")
         w.write(f"Shape of A:{A.shape}\n A:\n{A}\n")
         w.write(f"Shape of x:{x.shape}\n CG x:\n{x}\n")
         w.write(f"Shape of b:{b.shape}\n CG b:\n{b}\n")

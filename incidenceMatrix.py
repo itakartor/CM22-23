@@ -64,19 +64,24 @@ class IncidenceMatrix():
     
     def buildIncidenceMatrix( self,
             nodes:list=[],arcs:dict={},
-            path_test=configs.PATH_DIRECTORY_TEST,path_output=configs.PATH_DIRECTORY_OUTPUT,
+            path_test=configs.PATH_DMX,path_output=configs.PATH_DIRECTORY_OUTPUT,
             matrix_file=configs.NAME_FILE_MATRIX_INCIDENCE
         ) ->list:
         cIndex:int = 0
         retArrMatrix:list = []
-        #print(f"numFile: {len(os.listdir(path_test))}") 
+        print(f"numFile: {len(os.listdir(path_test))}") 
         for path in os.listdir(path_test):
+            print(f"Parse file: {path}")
+           
             matrix:IncidenceMatrix = IncidenceMatrix()
+            matrix.generator:str=os.path.basename(path)
             i:int = 0
             util.creationDir(path_output)
             w = open(os.path.join(path_output,f"{matrix_file}{i}.txt"), "w")
             r = open(os.path.join(path_test, path), "r")
+            
             for line in r:
+                print(f"Line: {line}")
                 match line[0]:
                     case "c":
                         if("generated" in line):
@@ -99,7 +104,7 @@ class IncidenceMatrix():
                     # in line with p there is number of nodes and arcs
                     # but it has to verify
                     case "p":
-                        arrValue = line.split(" ")
+                        arrValue = line.split()
                         matrix.nColl = int(arrValue[3])
                         matrix.nRow = int(arrValue[2])
                         matrix.m = np.zeros((matrix.nRow, matrix.nColl))

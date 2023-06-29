@@ -6,12 +6,11 @@ from incidenceMatrix import IncidenceMatrix as im
 from conjugateGradient import ConjugateGradient as CG
 sys.path.insert(0, 'generators\\batch')
 
+listEMatrix:im=im()
 
-# listEMatrix:im=im()
-
-# listEMatrix = listEMatrix.buildIncidenceMatrix()
-# conjugate = CG(listEMatrix)
-# conjugate.start_CG(numIteration=20)
+listEMatrix = listEMatrix.buildIncidenceMatrix()
+conjugate = CG(listEMatrix)
+conjugate.start_CG(numIteration=100)
 
 # in this point we have to generate all incidences matrixes and
 # generate all the solutions of the systems
@@ -26,8 +25,8 @@ sys.path.insert(0, 'generators\\batch')
 # b = np.reshape(b,(5,1))
 # print(b.shape[0])
 
-listEMatrix:im=im()
+#listEMatrix:im=im()
 
-listEMatrix = listEMatrix.buildIncidenceMatrix()
-minres = MINRES(listEMatrix)
-minres.start_MINRES(numIteration=1000,tol=1e-5)
+#listEMatrix = listEMatrix.buildIncidenceMatrix()
+#minres = MINRES(listEMatrix)
+#minres.start_MINRES(numIteration=1000,tol=1e-5)

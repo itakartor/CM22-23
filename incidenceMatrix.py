@@ -2,6 +2,7 @@ import os
 import numpy as np
 import configs
 import util
+import re
 class Arch():
     index:int
     source:int
@@ -31,6 +32,7 @@ class IncidenceMatrix():
     totDeficit:int
     seed:int
     generator:str
+    
 
     def __str__(self) -> str:
         rMatrixStr = str(self.m)
@@ -61,83 +63,185 @@ class IncidenceMatrix():
         self.avgDeficit:int = -1
         self.totDeficit:int = -1
         self.seed:int = -1
+    def completeParser(self,w,r,nodes,arcs):
+        print("Parsing complete graph start...")
+        matrix:IncidenceMatrix = IncidenceMatrix()
+        cIndex:int = 0
+        for line in r:
+            print(f"Line: {line}")
+            match line[0]:
+                case "c":
+                    if("generated" in line):
+                        pieces = line.split(" ")
+                        matrix.generator = f"{pieces[len(pieces) - 2]}"
+                    elif(" parallel " in line):
+                        matrix.archParallel = int(line[len(line)-2])
+                    elif(" cost " in line):
+                        matrix.maxCost = int(line[len(line) - 4])
+                        matrix.minCost = int(line[len(line) - 2])
+                    elif(" capacity " in line):
+                        matrix.maxCapacity = int(line[len(line) - 4])
+                        matrix.minCapacity = int(line[len(line) - 2])
+                    elif("average deficit " in line):
+                        matrix.avgDeficit = int(line[len(line)-2])
+                    elif("total deficit " in line):
+                        matrix.totDeficit = int(line[len(line)-2])
+                    elif(" seed " in line):
+                        matrix.seed = int(line[len(line)-2])        
+                # in line with p there is number of nodes and arcs
+                # but it has to verify
+                case "p":
+                    arrValue = line.split()
+                    matrix.nColl = int(arrValue[3])
+                    matrix.nRow = int(arrValue[2])
+                    matrix.m = np.zeros((matrix.nRow, matrix.nColl))
+                case "a":
+                    values = line.split()
+                    arch:Arch = Arch()
+                    arch.index = cIndex
+                    cIndex = cIndex + 1
+                    arch.source = int(values[1])
+                    arch.destination = int(values[2])
+                    
+                    matrix.m[arch.source - 1][arch.index] = 1
+                    matrix.m[arch.destination - 1][arch.index] = -1
+
+                    arch.maxCapacity = int(values[4])
+                    arch.cost = int(values[5])
+                    arcs[f'{arch.source}-{arch.destination}'] = arch
+                case "n":
+                    values = line.split()
+                    node:Node = Node()
+                    node.name = values[1]
+                    node.deficit = int(values[2])
+                    #print(node)
+                    nodes.append(node)
+        w.write(str(matrix))
+        
+        # print("++++++++++++++++++")
+        # [print(nodes[i]) for i in range(len(nodes))]
+        # print("++++++++++++++++++++++")
+        # [print(arcs[i]) for i in range(len(arcs))]
+        matrix.nodes.extend(nodes)
+        matrix.arcs.update(arcs)
+        w.close()
+        r.close()
+        return matrix
+    
+    def extract_C_values(self,line,npar):
+        values = re.findall(r'\b\d+\b', line)
+        if len(values) == npar:
+            return list(map(int, values))
+        else:
+            print("Errore: i valori non possono essere estratti correttamente dalla stringa.")
+            return
+
+        
+    def gridgraphParser(self,w,r,nodes,arcs):
+        print("Parsing GRID GRAPH start...")
+        matrix:IncidenceMatrix = IncidenceMatrix()
+        matrix.generator="Grid Graph"
+        cIndex:int = 0
+        for line in r:
+             match line[0]:
+                case "c":
+                    values=self.extract_C_values(line,5)
+                    if (values!= None):
+                        print(f"Parametri C {values}")
+                        matrix.minCapacity=values[0]
+                        matrix.maxCapacity=values[1]
+                        matrix.minCost=values[2]
+                        matrix.maxCost=values[3]
+                        matrix.seed ==values[4]
+                case "p":
+                    arrValue = line.split()
+                    matrix.nColl = int(arrValue[3])
+                    matrix.nRow = int(arrValue[2])
+                    matrix.m = np.zeros((matrix.nRow, matrix.nColl))
+                case "a":
+                    values = line.split()
+                    arch:Arch = Arch()
+                    arch.index = cIndex
+                    cIndex = cIndex + 1
+                    arch.source = int(values[1])
+                    arch.destination = int(values[2])
+                    
+                    matrix.m[arch.source - 1][arch.index] = 1
+                    matrix.m[arch.destination - 1][arch.index] = -1
+
+                    arch.maxCapacity = int(values[4])
+                    arch.cost = int(values[5])
+                    arcs[f'{arch.source}-{arch.destination}'] = arch
+        w.write(str(matrix))
+        matrix.arcs.update(arcs)
+        w.close()
+        r.close()
+        return matrix
+    
+    def rmfParser(self,w,r,nodes,arcs):
+        print("Parsing RMF graph start...")
+        matrix:IncidenceMatrix = IncidenceMatrix()
+        matrix.generator="RMF Graph"
+        cIndex:int = 0
+        for line in r:
+             match line[0]:
+                case "c":
+                    values=self.extract_C_values(line,7)
+                    if (values!= None):
+                        print(f"Parametri C {values}")
+                        matrix.minCapacity=values[2]
+                        matrix.maxCapacity=values[3]
+                        matrix.minCost=0
+                        matrix.maxCost=values[4]
+                        matrix.seed ==values[6]
+                case "p":
+                    arrValue = line.split()
+                    matrix.nColl = int(arrValue[3])
+                    matrix.nRow = int(arrValue[2])
+                    matrix.m = np.zeros((matrix.nRow, matrix.nColl))
+                case "n":
+                    values = line.split()
+                    node:Node = Node()
+                    node.name = values[1]
+                    node.deficit = int(values[2])
+                    #print(node)
+                    nodes.append(node)
+                case "a":
+                    values = line.split()
+                    arch:Arch = Arch()
+                    arch.index = cIndex
+                    cIndex = cIndex + 1
+                    arch.source = int(values[1])
+                    arch.destination = int(values[2])
+                    
+                    matrix.m[arch.source - 1][arch.index] = 1
+                    matrix.m[arch.destination - 1][arch.index] = -1
+
+                    arch.maxCapacity = int(values[4])
+                    arch.cost = int(values[5])
+                    arcs[f'{arch.source}-{arch.destination}'] = arch
+        w.write(str(matrix))
+        matrix.arcs.update(arcs)
+        matrix.nodes.extend(nodes)
+        w.close()
+        r.close()
+        return matrix
     
     def buildIncidenceMatrix( self,
             nodes:list=[],arcs:dict={},
             path_test=configs.PATH_DMX,path_output=configs.PATH_DIRECTORY_OUTPUT,
             matrix_file=configs.NAME_FILE_MATRIX_INCIDENCE
         ) ->list:
-        cIndex:int = 0
+       
         retArrMatrix:list = []
         print(f"numFile: {len(os.listdir(path_test))}") 
+        parser:dict={'com': self.completeParser , "ggr": self.gridgraphParser, "rmf": self.rmfParser}
         for path in os.listdir(path_test):
-            print(f"Parse file: {path}")
-           
-            matrix:IncidenceMatrix = IncidenceMatrix()
-            matrix.generator:str=os.path.basename(path)
             i:int = 0
+            print(f"Parse file: {path[0:3]}")
             util.creationDir(path_output)
             w = open(os.path.join(path_output,f"{matrix_file}{i}.txt"), "w")
             r = open(os.path.join(path_test, path), "r")
-            
-            for line in r:
-                print(f"Line: {line}")
-                match line[0]:
-                    case "c":
-                        if("generated" in line):
-                            pieces = line.split(" ")
-                            matrix.generator = f"{pieces[len(pieces) - 2]}"
-                        elif(" parallel " in line):
-                            matrix.archParallel = int(line[len(line)-2])
-                        elif(" cost " in line):
-                            matrix.maxCost = int(line[len(line) - 4])
-                            matrix.minCost = int(line[len(line) - 2])
-                        elif(" capacity " in line):
-                            matrix.maxCapacity = int(line[len(line) - 4])
-                            matrix.minCapacity = int(line[len(line) - 2])
-                        elif("average deficit " in line):
-                            matrix.avgDeficit = int(line[len(line)-2])
-                        elif("total deficit " in line):
-                            matrix.totDeficit = int(line[len(line)-2])
-                        elif(" seed " in line):
-                            matrix.seed = int(line[len(line)-2])        
-                    # in line with p there is number of nodes and arcs
-                    # but it has to verify
-                    case "p":
-                        arrValue = line.split()
-                        matrix.nColl = int(arrValue[3])
-                        matrix.nRow = int(arrValue[2])
-                        matrix.m = np.zeros((matrix.nRow, matrix.nColl))
-                    case "a":
-                        values = line.split()
-                        arch:Arch = Arch()
-                        arch.index = cIndex
-                        cIndex = cIndex + 1
-                        arch.source = int(values[1])
-                        arch.destination = int(values[2])
-                        
-                        matrix.m[arch.source - 1][arch.index] = 1
-                        matrix.m[arch.destination - 1][arch.index] = -1
-
-                        arch.maxCapacity = int(values[4])
-                        arch.cost = int(values[5])
-                        arcs[f'{arch.source}-{arch.destination}'] = arch
-                    case "n":
-                        values = line.split()
-                        node:Node = Node()
-                        node.name = values[1]
-                        node.deficit = int(values[2])
-                        #print(node)
-                        nodes.append(node)
-            w.write(str(matrix))
+            retArrMatrix.append( parser[path[0:3]](w,r,nodes,arcs))
             i = i +1
-            # print("++++++++++++++++++")
-            # [print(nodes[i]) for i in range(len(nodes))]
-            # print("++++++++++++++++++++++")
-            # [print(arcs[i]) for i in range(len(arcs))]
-            matrix.nodes.extend(nodes)
-            matrix.arcs.update(arcs)
-            retArrMatrix.append(matrix)
-            w.close()
-            r.close()
         return retArrMatrix

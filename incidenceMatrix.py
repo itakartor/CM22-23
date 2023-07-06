@@ -63,12 +63,12 @@ class IncidenceMatrix():
         self.avgDeficit:int = -1
         self.totDeficit:int = -1
         self.seed:int = -1
+        
     def completeParser(self,w,r,nodes,arcs):
         print("Parsing complete graph start...")
         matrix:IncidenceMatrix = IncidenceMatrix()
         cIndex:int = 0
         for line in r:
-            print(f"Line: {line}")
             match line[0]:
                 case "c":
                     if("generated" in line):
@@ -133,7 +133,7 @@ class IncidenceMatrix():
         if len(values) == npar:
             return list(map(int, values))
         else:
-            print("Errore: i valori non possono essere estratti correttamente dalla stringa.")
+            print(f"Errore: i valori {values} non possono essere estratti correttamente dalla stringa.")
             return
 
         
@@ -152,7 +152,7 @@ class IncidenceMatrix():
                         matrix.maxCapacity=values[1]
                         matrix.minCost=values[2]
                         matrix.maxCost=values[3]
-                        matrix.seed ==values[4]
+                        matrix.seed = values[4]
                 case "p":
                     arrValue = line.split()
                     matrix.nColl = int(arrValue[3])
@@ -189,11 +189,11 @@ class IncidenceMatrix():
                     values=self.extract_C_values(line,7)
                     if (values!= None):
                         print(f"Parametri C {values}")
-                        matrix.minCapacity=values[2]
-                        matrix.maxCapacity=values[3]
-                        matrix.minCost=0
-                        matrix.maxCost=values[4]
-                        matrix.seed ==values[6]
+                        matrix.minCapacity= values[2]
+                        matrix.maxCapacity= values[3]
+                        matrix.minCost= 0
+                        matrix.maxCost= values[4]
+                        matrix.seed = values[6]
                 case "p":
                     arrValue = line.split()
                     matrix.nColl = int(arrValue[3])
@@ -236,9 +236,8 @@ class IncidenceMatrix():
         retArrMatrix:list = []
         print(f"numFile: {len(os.listdir(path_test))}") 
         parser:dict={'com': self.completeParser , "ggr": self.gridgraphParser, "rmf": self.rmfParser}
+        i:int = 0
         for path in os.listdir(path_test):
-            i:int = 0
-            print(f"Parse file: {path[0:3]}")
             util.creationDir(path_output)
             w = open(os.path.join(path_output,f"{matrix_file}{i}.txt"), "w")
             r = open(os.path.join(path_test, path), "r")

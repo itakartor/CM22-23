@@ -216,3 +216,6 @@ Function getListPointCG Took 0.0032 seconds
 Function start_CG Took 0.0067 seconds
 Function getListPointCG Took 0.0022 seconds
 Function start_CG Took 0.0057 seconds
+Function invSimpleDiag Took 0.0258 seconds
+Function invSimpleDiag Took 0.0261 seconds
+Function invSimpleDiag Took 0.0228 seconds

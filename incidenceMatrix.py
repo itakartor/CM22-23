@@ -91,32 +91,12 @@ class IncidenceMatrix():
                 # in line with p there is number of nodes and arcs
                 # but it has to verify
                 case "p":
-                    arrValue = line.split()
-                    matrix.nColl = int(arrValue[3])
-                    matrix.nRow = int(arrValue[2])
-                    matrix.m = np.zeros((matrix.nRow, matrix.nColl))
+                    self.case_P(line,matrix)
                 case "a":
-                    values = line.split()
-                    arch:Arch = Arch()
-                    arch.index = cIndex
-                    cIndex = cIndex + 1
-                    arch.source = int(values[1])
-                    arch.destination = int(values[2])
-                    
-                    matrix.m[arch.source - 1][arch.index] = 1
-                    matrix.m[arch.destination - 1][arch.index] = -1
-
-                    arch.maxCapacity = int(values[4])
-                    arch.cost = int(values[5])
+                    arch=self.case_A(line,matrix,cIndex)
                     arcs[f'{arch.source}-{arch.destination}'] = arch
                 case "n":
-                    values = line.split()
-                    node:Node = Node()
-                    node.name = values[1]
-                    node.deficit = int(values[2])
-                    #print(node)
-                    nodes.append(node)
-        w.write(str(matrix))
+                    nodes.append(self.case_N(line))
         
         # print("++++++++++++++++++")
         # [print(nodes[i]) for i in range(len(nodes))]
@@ -124,9 +104,36 @@ class IncidenceMatrix():
         # [print(arcs[i]) for i in range(len(arcs))]
         matrix.nodes.extend(nodes)
         matrix.arcs.update(arcs)
+        w.write(str(matrix))
         w.close()
         r.close()
         return matrix
+    
+    def case_P(self,line,matrix):
+        arrValue = line.split()
+        matrix.nColl = int(arrValue[3])
+        matrix.nRow = int(arrValue[2])
+        matrix.m = np.zeros((matrix.nRow, matrix.nColl))
+        
+    def case_A(self,line,matrix,cIndex):
+        values = line.split()
+        arch:Arch = Arch()
+        arch.index = cIndex
+        cIndex = cIndex + 1
+        arch.source = int(values[1])
+        arch.destination = int(values[2])
+        matrix.m[arch.source - 1][arch.index] = 1
+        matrix.m[arch.destination - 1][arch.index] = -1
+        arch.maxCapacity = int(values[4])
+        arch.cost = int(values[5])
+        return arch
+    
+    def case_N(self,line):
+        values = line.split()
+        node:Node = Node()
+        node.name = values[1]
+        node.deficit = int(values[2])
+        return node
     
     def extract_C_values(self,line,npar):
         values = re.findall(r'\b\d+\b', line)
@@ -154,29 +161,20 @@ class IncidenceMatrix():
                         matrix.maxCost=values[3]
                         matrix.seed = values[4]
                 case "p":
-                    arrValue = line.split()
-                    matrix.nColl = int(arrValue[3])
-                    matrix.nRow = int(arrValue[2])
-                    matrix.m = np.zeros((matrix.nRow, matrix.nColl))
+                    self.case_P(line,matrix)
                 case "a":
-                    values = line.split()
-                    arch:Arch = Arch()
-                    arch.index = cIndex
-                    cIndex = cIndex + 1
-                    arch.source = int(values[1])
-                    arch.destination = int(values[2])
-                    
-                    matrix.m[arch.source - 1][arch.index] = 1
-                    matrix.m[arch.destination - 1][arch.index] = -1
-
-                    arch.maxCapacity = int(values[4])
-                    arch.cost = int(values[5])
+                    arch=self.case_A(line,matrix,cIndex)
                     arcs[f'{arch.source}-{arch.destination}'] = arch
-        w.write(str(matrix))
+                case "n":
+                    nodes.append(self.case_N(line))
         matrix.arcs.update(arcs)
+        matrix.nodes.extend(nodes)
+        w.write(str(matrix))
         w.close()
         r.close()
         return matrix
+    
+    
     
     def rmfParser(self,w,r,nodes,arcs):
         print("Parsing RMF graph start...")
@@ -195,34 +193,15 @@ class IncidenceMatrix():
                         matrix.maxCost= values[4]
                         matrix.seed = values[6]
                 case "p":
-                    arrValue = line.split()
-                    matrix.nColl = int(arrValue[3])
-                    matrix.nRow = int(arrValue[2])
-                    matrix.m = np.zeros((matrix.nRow, matrix.nColl))
+                    self.case_P(line,matrix)
                 case "n":
-                    values = line.split()
-                    node:Node = Node()
-                    node.name = values[1]
-                    node.deficit = int(values[2])
-                    #print(node)
-                    nodes.append(node)
+                    nodes.append(self.case_N(line))
                 case "a":
-                    values = line.split()
-                    arch:Arch = Arch()
-                    arch.index = cIndex
-                    cIndex = cIndex + 1
-                    arch.source = int(values[1])
-                    arch.destination = int(values[2])
-                    
-                    matrix.m[arch.source - 1][arch.index] = 1
-                    matrix.m[arch.destination - 1][arch.index] = -1
-
-                    arch.maxCapacity = int(values[4])
-                    arch.cost = int(values[5])
+                    arch=self.case_A(line,matrix,cIndex)
                     arcs[f'{arch.source}-{arch.destination}'] = arch
-        w.write(str(matrix))
         matrix.arcs.update(arcs)
         matrix.nodes.extend(nodes)
+        w.write(str(matrix))
         w.close()
         r.close()
         return matrix

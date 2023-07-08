@@ -3,7 +3,7 @@ import numpy as np
 import configs
 import util
 import re
-class Arch():
+class Arc():
     index:int
     source:int
     destination:int
@@ -14,15 +14,18 @@ class Arch():
 class Node():
     name:str
     deficit:int
+    def __init__(self,i="0",deficit=0) -> None:
+        self.name=i
+        self.deficit=deficit
     def __str__(self) -> str:
         return f"n Name: {self.name}, Deficit: {self.deficit}"
 
 class IncidenceMatrix():
     m:np.ndarray = np.ndarray([])
-    arcs:dict = {} #the key is the source-destination and the value is the Arch object 
+    arcs:dict = {} #the key is the source-destination and the value is the Arc object 
     nodes:list = []
     nRow:int
-    nColl:int
+    nCo:int
     archParallel:int
     maxCost:float
     minCost:float
@@ -51,10 +54,10 @@ class IncidenceMatrix():
     # - A dictionary of arcs
     def __init__(self):
         self.m:np.ndarray = np.ndarray(None)
-        self.arcs:dict = {}    #the key is the source-destination and the value is the Arch object 
+        self.arcs:dict = {}    #the key is the source-destination and the value is the Arc object 
         self.nodes:list = []
         self.nRow:int = -1
-        self.nColl:int = -1
+        self.nCol:int = -1
         self.archParallel:int = -1
         self.maxCost:float = float('-inf')
         self.minCost:float = float('inf')
@@ -93,8 +96,10 @@ class IncidenceMatrix():
                 case "p":
                     self.case_P(line,matrix)
                 case "a":
-                    arch=self.case_A(line,matrix,cIndex)
-                    arcs[f'{arch.source}-{arch.destination}'] = arch
+                    arc=self.case_A(line,matrix,cIndex)
+                    '''arcs[f'{arc.source}-{arc.destination}'] = arc'''
+                    arcs[cIndex] = arc
+                    cIndex = cIndex + 1
                 case "n":
                     nodes.append(self.case_N(line))
         
@@ -102,6 +107,10 @@ class IncidenceMatrix():
         # [print(nodes[i]) for i in range(len(nodes))]
         # print("++++++++++++++++++++++")
         # [print(arcs[i]) for i in range(len(arcs))]
+        for indexn in range(matrix.nRow):
+            if not any(node.name == str(indexn) for node in nodes):
+                nodes.append(Node(i=indexn))
+            indexn=indexn + 1
         matrix.nodes.extend(nodes)
         matrix.arcs.update(arcs)
         w.write(str(matrix))
@@ -111,22 +120,21 @@ class IncidenceMatrix():
     
     def case_P(self,line,matrix):
         arrValue = line.split()
-        matrix.nColl = int(arrValue[3])
+        matrix.nCol = int(arrValue[3])
         matrix.nRow = int(arrValue[2])
-        matrix.m = np.zeros((matrix.nRow, matrix.nColl))
+        matrix.m = np.zeros((matrix.nRow, matrix.nCol))
         
     def case_A(self,line,matrix,cIndex):
         values = line.split()
-        arch:Arch = Arch()
-        arch.index = cIndex
-        cIndex = cIndex + 1
-        arch.source = int(values[1])
-        arch.destination = int(values[2])
-        matrix.m[arch.source - 1][arch.index] = 1
-        matrix.m[arch.destination - 1][arch.index] = -1
-        arch.maxCapacity = int(values[4])
-        arch.cost = int(values[5])
-        return arch
+        arc:Arc = Arc()
+        arc.index = cIndex
+        arc.source = int(values[1])
+        arc.destination = int(values[2])
+        matrix.m[arc.source - 1][arc.index] = 1
+        matrix.m[arc.destination - 1][arc.index] = -1
+        arc.maxCapacity = int(values[4])
+        arc.cost = int(values[5])
+        return arc
     
     def case_N(self,line):
         values = line.split()
@@ -163,11 +171,17 @@ class IncidenceMatrix():
                 case "p":
                     self.case_P(line,matrix)
                 case "a":
-                    arch=self.case_A(line,matrix,cIndex)
-                    arcs[f'{arch.source}-{arch.destination}'] = arch
+                    arc=self.case_A(line,matrix,cIndex)
+                    '''arcs[f'{arc.source}-{arc.destination}'] = arc'''
+                    arcs[cIndex] = arc
+                    cIndex = cIndex + 1
                 case "n":
                     nodes.append(self.case_N(line))
         matrix.arcs.update(arcs)
+        for indexn in range(matrix.nRow):
+            if not any(node.name == str(indexn) for node in nodes):
+                nodes.append(Node(i=indexn))
+            indexn=indexn + 1
         matrix.nodes.extend(nodes)
         w.write(str(matrix))
         w.close()
@@ -197,10 +211,18 @@ class IncidenceMatrix():
                 case "n":
                     nodes.append(self.case_N(line))
                 case "a":
-                    arch=self.case_A(line,matrix,cIndex)
-                    arcs[f'{arch.source}-{arch.destination}'] = arch
+                    arc=self.case_A(line,matrix,cIndex)
+                    '''arcs[f'{arc.source}-{arc.destination}'] = arc'''
+                    arcs[cIndex] = arc
+                    cIndex = cIndex + 1
+
         matrix.arcs.update(arcs)
+        for indexn in range(matrix.nRow):
+            if not any(node.name == str(indexn) for node in nodes):
+                nodes.append(Node(i=indexn))
+            indexn=indexn + 1
         matrix.nodes.extend(nodes)
+        
         w.write(str(matrix))
         w.close()
         r.close()

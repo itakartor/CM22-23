@@ -37,6 +37,7 @@ class ConjugateGradient:
             #E*D^-1*Et
             istanceMCF.A = matrix_diagInv @ istanceMCF.EMatrix.T
             #It's all values w
+            
             print(eMatrices[i].generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
             istanceMCF.vectorOfb = (matrix_diagInv @ b ) - c
             self.listIstancesProblem.append(istanceMCF)

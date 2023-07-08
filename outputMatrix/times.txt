@@ -225,3 +225,9 @@ Function invSimpleDiag Took 0.0316 seconds
 Function invSimpleDiag Took 0.0272 seconds
 Function invSimpleDiag Took 0.0273 seconds
 Function invSimpleDiag Took 0.0259 seconds
+Function invSimpleDiag Took 0.0001 seconds
+Function invSimpleDiag Took 0.0001 seconds
+Function invSimpleDiag Took 0.0001 seconds
+Function invSimpleDiag Took 0.0001 seconds
+Function invSimpleDiag Took 0.0001 seconds
+Function invSimpleDiag Took 0.0222 seconds

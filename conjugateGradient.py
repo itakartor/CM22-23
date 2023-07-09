@@ -12,6 +12,7 @@ class istanceMCF_CG:
     EMatrix:np.ndarray
     diagonalMatrix:np.ndarray
     vectorOfB:np.ndarray
+    index:str
 
 # it's a list of the instances of the CG problems
 class ConjugateGradient:
@@ -24,20 +25,27 @@ class ConjugateGradient:
         self.listofPoints:list=[]
         # print(f"lunghezza {len(eMatrices)}")
         for i in range(len(eMatrices)):
+            print("I:",i)
             istanceMCF = istanceMCF_CG()
+            istanceMCF.index=f"{eMatrices[i].generator}-{i}"
             c = self.buildArrayDeficit(eMatrices[i].nodes)
             b = self.buildArrayCosts(eMatrices[i].arcs)
             istanceMCF.EMatrix = eMatrices[i].m
             numOfarcs:int = istanceMCF.EMatrix.shape[1]
             # this matrix is m*m that is arcs number  
+            print("this matrix is m*m that is arcs number")
             istanceMCF.diagonalMatrix = diagonalM(numOfarcs,numOfarcs)
             
             #E*D^-1
-            matrix_diagInv = istanceMCF.EMatrix @ invSimpleDiag(istanceMCF.diagonalMatrix)
+            print("D^-1")
+            invDiag =invSimpleDiag(istanceMCF.diagonalMatrix)
+            print("E*D^-1")
+            matrix_diagInv = istanceMCF.EMatrix @ invDiag
             #E*D^-1*Et
+            print("E*D^-1*Et") 
             istanceMCF.A = matrix_diagInv @ istanceMCF.EMatrix.T
             #It's all values w
-            
+            print("It's all values w") 
             print(eMatrices[i].generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
             istanceMCF.vectorOfb = (matrix_diagInv @ b ) - c
             self.listIstancesProblem.append(istanceMCF)
@@ -60,8 +68,8 @@ class ConjugateGradient:
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     @timeit
-    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x:np.ndarray,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100) ->listOfPointsXY:
-        w = open(os.path.join(path_output,f"{solution_file}.txt"), "w")
+    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x:np.ndarray,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") ->listOfPointsXY:
+        w = open(os.path.join(path_output,f"{solution_file}-{name}.txt"), "w")
         xGraph:list[int] = [] # number of iteration
         yGraph:list[int] = [] # difference between real b and artificial b
         listPoints:listOfPointsXY = listOfPointsXY()
@@ -115,7 +123,8 @@ class ConjugateGradient:
                 A=instance.A,
                 b=np.transpose(instance.vectorOfb),
                 x=np.zeros((instance.A.shape[0],1)),
-                numIteration=20
+                numIteration=20,
+                name=instance.index
             )
             if draw_graph:
                 plt.plot(points.listX,points.listY, label = f'iteration{i}')

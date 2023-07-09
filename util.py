@@ -42,6 +42,7 @@ def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray,x:np.ndarray = 
     print(matrixInv)
     x = matrixInv @ c.T
     print(f"\nDIRECT TEST x: {x}\n")
+    
 @timeit
 def invSimpleDiag(D:np.ndarray):
     for i in range(D.shape[0]):

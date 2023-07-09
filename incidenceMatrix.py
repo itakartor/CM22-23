@@ -67,6 +67,15 @@ class IncidenceMatrix():
         self.totDeficit:int = -1
         self.seed:int = -1
         
+    def fill_Nodes(self, nRow, nodes):
+        print("Numero Nodi:",nRow,"Nodi parsati:",len(nodes))
+        for n in nodes:
+            print(str(n))
+        for indexn in range(1,nRow+1):
+            if not any(node.name == str(indexn) for node in nodes):
+                nodes.append(Node(i=indexn))
+        return nodes
+        
     def completeParser(self,w,r,nodes,arcs):
         print("Parsing complete graph start...")
         matrix:IncidenceMatrix = IncidenceMatrix()
@@ -107,10 +116,7 @@ class IncidenceMatrix():
         # [print(nodes[i]) for i in range(len(nodes))]
         # print("++++++++++++++++++++++")
         # [print(arcs[i]) for i in range(len(arcs))]
-        for indexn in range(matrix.nRow):
-            if not any(node.name == str(indexn) for node in nodes):
-                nodes.append(Node(i=indexn))
-            indexn=indexn + 1
+        nodes=self.fill_Nodes(matrix.nRow,nodes)
         matrix.nodes.extend(nodes)
         matrix.arcs.update(arcs)
         w.write(str(matrix))
@@ -161,7 +167,7 @@ class IncidenceMatrix():
              match line[0]:
                 case "c":
                     values=self.extract_C_values(line,5)
-                    if (values!= None):
+                    if (values != None):
                         print(f"Parametri C {values}")
                         matrix.minCapacity=values[0]
                         matrix.maxCapacity=values[1]
@@ -178,10 +184,7 @@ class IncidenceMatrix():
                 case "n":
                     nodes.append(self.case_N(line))
         matrix.arcs.update(arcs)
-        for indexn in range(matrix.nRow):
-            if not any(node.name == str(indexn) for node in nodes):
-                nodes.append(Node(i=indexn))
-            indexn=indexn + 1
+        nodes=self.fill_Nodes(matrix.nRow,nodes)
         matrix.nodes.extend(nodes)
         w.write(str(matrix))
         w.close()
@@ -217,10 +220,7 @@ class IncidenceMatrix():
                     cIndex = cIndex + 1
 
         matrix.arcs.update(arcs)
-        for indexn in range(matrix.nRow):
-            if not any(node.name == str(indexn) for node in nodes):
-                nodes.append(Node(i=indexn))
-            indexn=indexn + 1
+        nodes=self.fill_Nodes(matrix.nRow,nodes)
         matrix.nodes.extend(nodes)
         
         w.write(str(matrix))
@@ -233,7 +233,6 @@ class IncidenceMatrix():
             path_test=configs.PATH_DMX,path_output=configs.PATH_DIRECTORY_OUTPUT,
             matrix_file=configs.NAME_FILE_MATRIX_INCIDENCE
         ) ->list:
-       
         retArrMatrix:list = []
         print(f"numFile: {len(os.listdir(path_test))}") 
         parser:dict={'com': self.completeParser , "ggr": self.gridgraphParser, "rmf": self.rmfParser}
@@ -243,5 +242,7 @@ class IncidenceMatrix():
             w = open(os.path.join(path_output,f"{matrix_file}{i}.txt"), "w")
             r = open(os.path.join(path_test, path), "r")
             retArrMatrix.append( parser[path[0:3]](w,r,nodes,arcs))
+            nodes.clear()
+            arcs.clear()
             i = i +1
         return retArrMatrix

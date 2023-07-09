@@ -15,7 +15,7 @@ def matMul(A:np.ndarray,D:np.ndarray):
     return A @ D
 
 
-D:np.ndarray = diagonalM(pow(10,nPow),pow(10,nPow))
+D:np.ndarray = diagonalM(pow(10,nPow))
 #I2 = invS(D)
 #I1 = inv2(D)
 A:np.ndarray = np.random.rand(pow(10,nPow),pow(10,nPow))

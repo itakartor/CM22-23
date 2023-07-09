@@ -3,7 +3,7 @@ from incidenceMatrix import IncidenceMatrix
 import os
 import numpy as np
 import configs
-import matplotlib as plt
+from matplotlib import pyplot as plt
 
 from util import diagonalM, invSimpleDiag, listOfPointsXY, timeit
 
@@ -12,7 +12,7 @@ class istanceMCF_CG:
     EMatrix:np.ndarray
     diagonalMatrix:np.ndarray
     vectorOfB:np.ndarray
-    index:str
+    name:str
 
 # it's a list of the instances of the CG problems
 class ConjugateGradient:
@@ -21,32 +21,32 @@ class ConjugateGradient:
     #initialize istance of the problems  with incidence matrixis 
 
     def __init__(self,eMatrices:list[IncidenceMatrix]):
-        self.listIstancesProblem:list = []
-        self.listofPoints:list=[]
+        self.listIstancesProblem = []
+        self.listofPoints = []
         # print(f"lunghezza {len(eMatrices)}")
         for i in range(len(eMatrices)):
-            print("I:",i)
+            #print("I:",i)
             istanceMCF = istanceMCF_CG()
-            istanceMCF.index=f"{eMatrices[i].generator}-{i}"
+            istanceMCF.name=f"{eMatrices[i].generator.replace('./src/','')}-{i}"
             c = self.buildArrayDeficit(eMatrices[i].nodes)
             b = self.buildArrayCosts(eMatrices[i].arcs)
             istanceMCF.EMatrix = eMatrices[i].m
             numOfarcs:int = istanceMCF.EMatrix.shape[1]
             # this matrix is m*m that is arcs number  
-            print("this matrix is m*m that is arcs number")
-            istanceMCF.diagonalMatrix = diagonalM(numOfarcs,numOfarcs)
+            #print("this matrix is m*m that is arcs number")
+            istanceMCF.diagonalMatrix = diagonalM(numOfarcs)
             
             #E*D^-1
-            print("D^-1")
+            #print("D^-1")
             invDiag =invSimpleDiag(istanceMCF.diagonalMatrix)
-            print("E*D^-1")
+            #print("E*D^-1")
             matrix_diagInv = istanceMCF.EMatrix @ invDiag
             #E*D^-1*Et
-            print("E*D^-1*Et") 
+            #print("E*D^-1*Et") 
             istanceMCF.A = matrix_diagInv @ istanceMCF.EMatrix.T
             #It's all values w
-            print("It's all values w") 
-            print(eMatrices[i].generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
+            #print("It's all values w") 
+            #print(eMatrices[i].generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
             istanceMCF.vectorOfb = (matrix_diagInv @ b ) - c
             self.listIstancesProblem.append(istanceMCF)
 
@@ -68,7 +68,7 @@ class ConjugateGradient:
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     @timeit
-    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x:np.ndarray,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") ->listOfPointsXY:
+    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x:np.ndarray,tol:float,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") ->listOfPointsXY:
         w = open(os.path.join(path_output,f"{solution_file}-{name}.txt"), "w")
         xGraph:list[int] = [] # number of iteration
         yGraph:list[int] = [] # difference between real b and artificial b
@@ -86,7 +86,9 @@ class ConjugateGradient:
         alpha:float = 0
         beta:float = 0
         proveB:float
+        last_iteration:int = 0
         for j in range(numIteration):
+            last_iteration = j
             Ad:np.ndarray = A @ d
             numAlpha:float = r.T @ r # this uses old r
             denAlpha:float = d.T @ Ad
@@ -97,9 +99,11 @@ class ConjugateGradient:
             
             proveB =  A @ x
             proveBNorm:float = np.linalg.norm(b - proveB)/np.linalg.norm(proveB) 
-            
-            yGraph.append(proveBNorm)
             r = r - alpha *Ad
+            retTol = r.T @ r
+            yGraph.append(retTol[0][0])
+            if(retTol < tol*tol):
+                break
             beta= r.T @ r / numAlpha # this uses new r
             d = r + beta * d
         listPoints.listX.extend(xGraph)
@@ -110,22 +114,37 @@ class ConjugateGradient:
         w.write(f"Shape of b:{b.shape}\n CG b:\n{b}\n")
         w.write(f"Shape of proveB:{proveB.shape}\n CG proveB:\n{proveB}\n")
         w.write(f"CG proveBNorm:{proveBNorm}\n")
+        w.write(f"last iteration: {last_iteration}, tollerance: {retTol[0][0]}")
         
         w.close()
+        print(f"last iteration: {last_iteration}, tollerance: {retTol[0][0]}")
+
         return listPoints
 
     #compute the conjugate algorithm for all the problem instances
     @timeit
-    def start_CG(self,draw_graph=configs.ACTIVE_DRAW_GRAPH, numIteration:int=100):
+    def start_CG(self,draw_graph=configs.ACTIVE_DRAW_GRAPH, inNumIteration:int=0,inTol:float = 1e-3):
         i:int =1
         for instance in self.listIstancesProblem:
-            points:listOfPointsXY = self.getListPointCG(
-                A=instance.A,
-                b=np.transpose(instance.vectorOfb),
-                x=np.zeros((instance.A.shape[0],1)),
-                numIteration=20,
-                name=instance.index
-            )
+            print(f"rank matrix: {instance.A.shape[0]-1}")
+            if(inNumIteration != 0):
+                points:listOfPointsXY = self.getListPointCG(
+                        A=instance.A,
+                        b=np.transpose(instance.vectorOfb),
+                        x=np.zeros((instance.A.shape[0],1)),
+                        tol=inTol,
+                        numIteration=inNumIteration, # rank of the matrix
+                        name=instance.name
+                    )
+            else:
+                points:listOfPointsXY = self.getListPointCG(
+                    A=instance.A,
+                    b=np.transpose(instance.vectorOfb),
+                    x=np.zeros((instance.A.shape[0],1)),
+                    tol=inTol,
+                    numIteration=instance.A.shape[0]-1, # rank of the matrix
+                    name=instance.name
+                )
             if draw_graph:
                 plt.plot(points.listX,points.listY, label = f'iteration{i}')
                 i += 1
@@ -138,5 +157,3 @@ class ConjugateGradient:
             plt.legend()
             plt.show()
         return self.listofPoints
-
-    #https://towardsdatascience.com/complete-step-by-step-conjugate-gradient-algorithm-from-scratch-202c07fb52a8

@@ -29,12 +29,12 @@ def creationDir(nameDir:str):
 # This function builds a diagonal positive Matrix and returns it
 # @param nRow: the number of rows
 # @param nColl: the number of columns
-def diagonalM(nRow:int, nCols:int) -> np.ndarray:
+def diagonalM(nCols:int) -> np.ndarray:
         return np.diag(np.random.rand(1,nCols)[0])
 
 # this function has to calculate the condition Ex = c
 @timeit
-def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray,x:np.ndarray = np.ndarray([])):
+def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray):
     # det = np.linalg.det(incidenceMatrix)
     # print("det: {det}")
     matrixInv = incidenceMatrix.getI()

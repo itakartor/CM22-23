@@ -3,7 +3,7 @@ import os
 import numpy as np
 from functools import wraps
 import time
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
 
 PATH_DIRECTORY_TEST = "./testAnalyze"
@@ -88,7 +88,7 @@ def creationDir(nameDir:str):
 # This function builds a diagonal positive Matrix and returns it
 # @param nRow: the number of rows
 # @param nColl: the number of columns
-def diagonalM(nRow:int, nCols:int) -> np.ndarray:
+def diagonalM(nCols:int) -> np.ndarray:
         return np.diag(np.random.rand(1,nCols)[0])
 
 '''
@@ -197,7 +197,7 @@ def buildArrayCosts(dictArches:dict) -> np.array:
     return b
 # this function has to calculate the condition Ex = c
 @timeit
-def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray,x:np.ndarray = np.ndarray([])):
+def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray):
     # det = np.linalg.det(incidenceMatrix)
     # print("det: {det}")
     matrixInv = incidenceMatrix.getI()
@@ -215,7 +215,7 @@ def createInstanceMCF_CG(eMatrixs:list) -> list[istanceMCF_CG]:
         istanceMCF.matrix = eMatrixs[i].m
         numOfArches:int = istanceMCF.matrix.shape[1]
         # this matrix is m*m that is arches number  
-        istanceMCF.diagonalMatrix = diagonalM(numOfArches,numOfArches)
+        istanceMCF.diagonalMatrix = diagonalM(numOfArches)
         #E*D^-1*Et
         istanceMCF.A = (istanceMCF.matrix @ np.linalg.inv(istanceMCF.diagonalMatrix)) @ istanceMCF.matrix.T
         #It's all values w
@@ -241,7 +241,7 @@ def conjugateGradient(A:np.ndarray, b:np.ndarray, x:np.ndarray, n:int) ->listOfP
         print("ERROR on dimension")
         print(f"dim A: {A.shape}, dim b: {b.shape}")
         print('-------------------------------------\n')
-        return
+        return listOfPointsXY()
     r:np.array = np.copy(b)# - A*x0 # residual Ax - b
     d = np.copy(r) # directions vector
     alpha = np.array([])
@@ -267,7 +267,7 @@ def conjugateGradient(A:np.ndarray, b:np.ndarray, x:np.ndarray, n:int) ->listOfP
     # print(f"y : {yGraph}")
     listPoints.listX.extend(xGraph)
     listPoints.listY.extend(yGraph)
-    w.write(f"A*x = b")
+    w.write("A*x = b")
     w.write(f"Shape of A:{A.shape}\n A:\n{A}\n")
     w.write(f"Shape of x:{x.shape}\n CG x:\n{x}\n")
     w.write(f"Shape of x:{b.shape}\n CG b:\n{b}\n")
@@ -318,7 +318,7 @@ def main():
     # #     print (str(arr[0].arches[x]))
     # # print(len(eMatrix))
     # matrix = np.matrix(eMatrix[0].m)
-    # diagonalMatrix = diagonalM(matrix.shape[1],matrix.shape[1])
+    # diagonalMatrix = diagonalM(matrix.shape[1])
     # #E*D^-1*Et
     # A = np.matmul(np.matmul(matrix,diagonalMatrix.getI()),matrix.getT())
     # #print(f"shape matrix E: {matrix.shape}, {diagonalMatrix.shape}")

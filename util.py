@@ -55,3 +55,8 @@ def invSimpleDiag(D:np.ndarray):
 #         for i in range(A.shape[0]):
 #             A[j][i] = A[j][i]*D[j][j]
 #     return A
+
+def instanceofMCF(D,E,b,c):
+    A = np.block( [[D, E.T],[E, np.zeros((len(c),len(c)))]])
+    b = np.hstack((b,c))
+    return A,b

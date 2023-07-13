@@ -3,6 +3,8 @@ import os
 import time
 from functools import wraps
 import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
 
 class listOfPointsXY:
     listX:list[int]
@@ -56,7 +58,16 @@ def invSimpleDiag(D:np.ndarray):
 #             A[j][i] = A[j][i]*D[j][j]
 #     return A
 
+# Funzione che riceve come argomento le matrici e i vettori del problema e restituisce la matrice A e il vettore b
 def instanceofMCF(D,E,b,c):
     A = np.block( [[D, E.T],[E, np.zeros((len(c),len(c)))]])
     b = np.hstack((b,c))
     return A,b
+
+#Funzione che riceve la matrice di incidenza e la converte in un grafo di tipo networkx DA TESTARE
+def incidenceToGraph(A):
+    am =(np.dot(A,A.T)>0).astype(int)
+    print("Adjacence:",am)
+    G=nx.convert_matrix.from_numpy_array(am,parallel_edges=True,create_using=nx.DiGraph)
+    nx.draw(G)
+    plt.show()

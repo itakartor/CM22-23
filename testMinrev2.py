@@ -14,4 +14,4 @@ for inM in listEMatrix:
     A,b= util.instanceofMCF(D,E,b,c)
     print("A:",A.shape,"b",len(b))
     #x,exitcode=minres(A,b,show=True)
-    print("Exit msg: ",minres2(A,b))
+    print(minres2(A,b))

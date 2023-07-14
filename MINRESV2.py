@@ -41,18 +41,29 @@ def minres2(A,b,x0=None,tol=1e-5, maxiter=None,plot=False):
 def __prodMV(A,v):    
     return np.matmul(A,v)
 
-def lanczos(A,b, func=__prodMV):
-    k=len(b)
-    Q =np.ndarray(b.copy/np.linalg.norm(b))
+def lanczos(A,b,N, func=__prodMV):
+    k=N
+    Q = b.copy()/np.linalg.norm(b)
+    print("Q",Q)
     alpha = np.zeros(k)
+    print("Alpha",alpha)
     beta = np.zeros(k+1)
+    print("beta",beta)
     for m in range(k):
         w = func(A,Q[:,m])
-        if m > 0 : w-= beta[m]* Q[:m-1]
-        alpha[m] = (Q[:,m].T * w)[0,0]
-        W-=alpha[m] * Q[:,m]
+        print("w",w)
+        print("Qm",Q[:,m])
+
+        if m > 0 : 
+            w-= beta[m]* Q[:m-1]
+        alpha[m] = np.dot(Q[:,m], w)
+        print(f"Alpha{m}",alpha[m])
+        w-=np.dot(alpha[m] , Q[:,m])
         beta[m+1]= np.linalg.norm(w)
-        Q = np.hstack((Q,w.copy()/ beta[m+1]))
+        stack=np.divide(w.copy() , beta[m+1])
+        stack=np.reshape(stack,(len(stack),1))
+        Q = np.hstack((Q,stack))
+        print(f"Q{m}",Q)
     rbeta= beta[1:-1]
     H = np.diag(alpha)+ np.diag(rbeta+1) + np.diag(rbeta,-1)
     return Q,H
@@ -61,10 +72,12 @@ def lanczos(A,b, func=__prodMV):
 
 
 def ConstructMatrix(N):
-    H = np.ndarray(np.zeros([N,N]))
+    H = np.zeros((N,N))
     for i in range(N):
         for j in range(N):
             H[i, j] = float( 1+min(i, j) )
+    print("H",H)
+    return H
 
 def eigenvalues(H):
     return np.linalg.eig(H)[0]
@@ -73,31 +86,32 @@ def print_first_last(a):
     print('%1.9g\t' % a.min())
     print('%1.9g' % a.max())
 
+def print_first_N(a,N):
+    try: acopy = a.copy()
+    except: acopy = a[:]
+    acopy.sort()
+    max = min(N,len(a))
+    for i in range(max):
+        print('%1.5g\t' % acopy[i])
+    print('')
+
 def randomvector(N):
-    v = np.random.random(N)
-    n = np.sqrt( sum(v*v) )
-    return np.ndarray(np.ndarray(v/n).T * 1L)            
+    return np.random.rand(N,1)            
 
 def checkconvergence(N=10,N_to_display=5):
     #checks convergence of lanczos approximation to eigenvalues
     H = ConstructMatrix(N)
-    H = H + 1j*H
-    H = H.H * H
+    H = H.T * H
     True_eigvals = eigenvalues(H)
 
     print('True '),
     print_first_last(True_eigvals)
-    
-
-  #  v = [mat(zeros(N)).T, randomvector(N)]
     v = randomvector(N)
-    #V, h = arnoldi(H, v, N)
-    #V, h  = lanczos(H, v, N)
-    V,  h = method(H, v, N)
- #   print 'V=',  V
+    V,  h = lanczos(H, v, N)
+    print( 'V=',  V)
     for i in range(1,N+1):
-        print '%i    ' % i,
+        print('%i    ' % i)
         #print_first_last(eigenvalues(h[:i,:i]))
         print_first_N( eigenvalues(h[:i,:i]) ,  i)
-    print 'eigenvalues via eig(flapack)'
+    print('eigenvalues via eig(flapack)')
     print_first_N( True_eigvals ,  N)

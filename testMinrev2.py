@@ -2,7 +2,7 @@ import numpy as np
 import IncidenceMatrixV2 
 import util 
 from scipy.sparse.linalg import minres
-from MINRESV2 import minres2
+from MINRESV2 import minres2,checkconvergence
 
 listEMatrix = IncidenceMatrixV2.buildIncidenceMatrix()
 for inM in listEMatrix:
@@ -14,4 +14,5 @@ for inM in listEMatrix:
     A,b= util.instanceofMCF(D,E,b,c)
     print("A:",A.shape,"b",len(b))
     #x,exitcode=minres(A,b,show=True)
-    print(minres2(A,b))
+    #print(minres2(A,b))
+    checkconvergence()

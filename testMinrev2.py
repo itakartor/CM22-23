@@ -4,6 +4,9 @@ import util
 from scipy.sparse.linalg import minres
 from MINRESV2 import minres2,checkconvergence
 
+#https://sci-hub.ru/https://doi.org/10.1137/9780898719987.ch7
+#https://www.cs.cornell.edu/courses/cs6220/2017fa/CS6220_Lecture10.pdf
+
 listEMatrix = IncidenceMatrixV2.buildIncidenceMatrix()
 for inM in listEMatrix:
     E = inM.m
@@ -15,4 +18,4 @@ for inM in listEMatrix:
     print("A:",A.shape,"b",len(b))
     #x,exitcode=minres(A,b,show=True)
     #print(minres2(A,b))
-    checkconvergence()
+    checkconvergence(A=A,b=b)

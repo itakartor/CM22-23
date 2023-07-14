@@ -38,10 +38,11 @@ def minres2(A,b,x0=None,tol=1e-5, maxiter=None,plot=False):
         
     eps=np.finfo(float).eps
 
-def __prodMV(A,v):    
+def __prodMV(A,v): 
     return np.matmul(A,v)
 
 def lanczos(A,b,N, func=__prodMV):
+    exit=N
     k=N
     Q = b.copy()/np.linalg.norm(b)
     alpha = np.zeros(k)
@@ -53,12 +54,16 @@ def lanczos(A,b,N, func=__prodMV):
         alpha[m] = np.dot(Q[:,m], w)
         w-=np.dot(alpha[m] , Q[:,m])
         beta[m+1]= np.linalg.norm(w)
+        if np.abs(beta[m+1])<1e-10:
+            exit=m
+            print('Iter:',m)
+            break 
         stack=np.divide(w.copy() , beta[m+1])
         stack=np.reshape(stack,(len(stack),1))
         Q = np.hstack((Q,stack))
-    rbeta= beta[1:-1]
+    rbeta = beta[1:-1]
     H = np.diag(alpha)+ np.diag(rbeta, +1) + np.diag(rbeta,-1)
-    return Q,H
+    return Q,H,exit
 
 
 
@@ -75,8 +80,8 @@ def eigenvalues(H):
     return np.linalg.eig(H)[0]
 
 def print_first_last(a):
-    print('%1.9g\t' % a.min())
-    print('%1.9g' % a.max())
+    print("Min  ",'%1.9g\t' % a.min())
+    print("Max", '%1.9g' % a.max())
 
 def print_first_N(a,N):
     try: acopy = a.copy()
@@ -90,21 +95,28 @@ def print_first_N(a,N):
 def randomvector(N):
     return np.random.rand(N,1)            
 
-def checkconvergence(N=5,N_to_display=5):
+def checkconvergence(N=5,A=None, b=None):
+    
     #checks convergence of lanczos approximation to eigenvalues
-    A = ConstructMatrix(N)
-    A = A.T * A
+    if A.all() == None:
+        A = ConstructMatrix(N)
+        A = A.T * A
+        q = randomvector(N)
+    else:
+        q=np.reshape(b, (len(b), 1))
     True_eigvals = eigenvalues(A)
 
     print('True '),
     print_first_last(True_eigvals)
-    v = randomvector(N)
-    V,  h = lanczos(A, v, N)
-    print( 'V=',  V)
+    Q,  h,exit = lanczos(A, q, A.shape[0])
+    print('Q=', Q  )
     print('H=', h)
-    for i in range(1,N+1):
-        print('%i    ' % i)
-        #print_first_last(eigenvalues(h[:i,:i]))
-        print_first_N( eigenvalues(h[:i,:i]) ,  i)
-    print('eigenvalues via eig(flapack)')
+    for i in range(A.shape[0]-N,A.shape[0]+1):
+         print('%i    ' % i)
+         print_first_last(eigenvalues(h[:i,:i]))
+         print_first_N( eigenvalues(h[:i,:i]) ,  N)
+    print('Q=', Q  )
+    print('H=', h)
+    print(exit)
+    print('eigenvalues via eig')
     print_first_N( True_eigvals ,  N)

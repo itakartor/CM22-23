@@ -44,28 +44,20 @@ def __prodMV(A,v):
 def lanczos(A,b,N, func=__prodMV):
     k=N
     Q = b.copy()/np.linalg.norm(b)
-    print("Q",Q)
     alpha = np.zeros(k)
-    print("Alpha",alpha)
     beta = np.zeros(k+1)
-    print("beta",beta)
     for m in range(k):
         w = func(A,Q[:,m])
-        print("w",w)
-        print("Qm",Q[:,m])
-
         if m > 0 : 
-            w-= beta[m]* Q[:m-1]
+            w-= beta[m] * Q[:,m-1]
         alpha[m] = np.dot(Q[:,m], w)
-        print(f"Alpha{m}",alpha[m])
         w-=np.dot(alpha[m] , Q[:,m])
         beta[m+1]= np.linalg.norm(w)
         stack=np.divide(w.copy() , beta[m+1])
         stack=np.reshape(stack,(len(stack),1))
         Q = np.hstack((Q,stack))
-        print(f"Q{m}",Q)
     rbeta= beta[1:-1]
-    H = np.diag(alpha)+ np.diag(rbeta+1) + np.diag(rbeta,-1)
+    H = np.diag(alpha)+ np.diag(rbeta, +1) + np.diag(rbeta,-1)
     return Q,H
 
 
@@ -98,17 +90,18 @@ def print_first_N(a,N):
 def randomvector(N):
     return np.random.rand(N,1)            
 
-def checkconvergence(N=10,N_to_display=5):
+def checkconvergence(N=5,N_to_display=5):
     #checks convergence of lanczos approximation to eigenvalues
-    H = ConstructMatrix(N)
-    H = H.T * H
-    True_eigvals = eigenvalues(H)
+    A = ConstructMatrix(N)
+    A = A.T * A
+    True_eigvals = eigenvalues(A)
 
     print('True '),
     print_first_last(True_eigvals)
     v = randomvector(N)
-    V,  h = lanczos(H, v, N)
+    V,  h = lanczos(A, v, N)
     print( 'V=',  V)
+    print('H=', h)
     for i in range(1,N+1):
         print('%i    ' % i)
         #print_first_last(eigenvalues(h[:i,:i]))

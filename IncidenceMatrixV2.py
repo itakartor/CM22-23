@@ -8,14 +8,14 @@ class Arc():
     index:int
     source:int
     destination:int
-    maxCapacity:int
-    cost:int
+    maxCapacity:float
+    cost:float
     def __str__(self) -> str:
         return f"a Source: {self.source}, Destination: {self.destination}, MaxCapacity: {self.maxCapacity}, Cost: {self.cost}" 
     
 class Node():
     name:str
-    deficit:int
+    deficit:float
     def __init__(self,i="0",deficit=0) -> None:
         self.name=i
         self.deficit=deficit
@@ -135,14 +135,14 @@ def __case_a(line,matrix,cIndex):
     matrix.m[arc.source - 1][arc.index] = 1
     matrix.m[arc.destination - 1][arc.index] = -1
     arc.maxCapacity = int(values[4])
-    arc.cost = int(values[5])
+    arc.cost = float(values[5])
     return arc
 
 def __case_n(line):
     values = line.split()
     node:Node = Node()
     node.name = values[1]
-    node.deficit = int(values[2])
+    node.deficit = float(values[2])
     return node
 
 def __extract_c_values(line,npar):

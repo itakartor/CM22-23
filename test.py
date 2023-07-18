@@ -14,8 +14,13 @@ save_err = np.seterr(over='raise')
 listEMatrix:im=im()
 
 listEMatrix = listEMatrix.buildIncidenceMatrix()
+# print("CG =================================================================")
+
+
 # conjugate = CG(listEMatrix)
 # conjugate.start_CG()
+
+print("MINRES =================================================================")
 minres = MINRES(listEMatrix)
 minres.start_MINRES()
 

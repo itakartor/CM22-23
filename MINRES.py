@@ -73,7 +73,7 @@ class MINRES:
         x:np.ndarray = x0
         r:np.ndarray = b - A @ x0 # - A*x0 # residual Ax - b
         d0:np.ndarray = r # first directions vector
-        q0:np.ndarray = A @ d0
+        q0:np.ndarray = A @ d0 # w nel nuovo algoritmo
         d1:np.ndarray = d0
         d2:np.ndarray
         q1:np.ndarray = q0

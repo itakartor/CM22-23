@@ -114,10 +114,10 @@ class ConjugateGradient:
         w.write(f"Shape of b:{b.shape}\n CG b:\n{b}\n")
         w.write(f"Shape of proveB:{proveB.shape}\n CG proveB:\n{proveB}\n")
         w.write(f"CG proveBNorm:{proveBNorm}\n")
-        w.write(f"last iteration: {last_iteration}, tollerance: {retTol[0][0]}")
+        w.write(f"last iteration: {last_iteration}, residual: {retTol[0][0]}")
         
         w.close()
-        print(f"last iteration: {last_iteration}, tollerance: {retTol[0][0]}")
+        print(f"last iteration: {last_iteration}, residual: {retTol[0][0]}")
 
         return listPoints
 
@@ -126,7 +126,7 @@ class ConjugateGradient:
     def start_CG(self,draw_graph=configs.ACTIVE_DRAW_GRAPH, inNumIteration:int=0,inTol:float = 1e-3):
         i:int =1
         for instance in self.listIstancesProblem:
-            print(f"rank matrix: {instance.A.shape[0]-1}")
+            print(f"rank matrix: {instance.A.shape[0]}")
             if(inNumIteration != 0):
                 points:listOfPointsXY = self.getListPointCG(
                         A=instance.A,
@@ -142,10 +142,11 @@ class ConjugateGradient:
                     b=np.transpose(instance.vectorOfb),
                     x=np.zeros((instance.A.shape[0],1)),
                     tol=inTol,
-                    numIteration=instance.A.shape[0]-1, # rank of the matrix
+                    numIteration=instance.A.shape[0], # rank of the matrix
                     name=instance.name
                 )
             if draw_graph:
+                plt.subplot(3,1,i)
                 plt.plot(points.listX,points.listY, label = f'iteration{i}')
                 i += 1
             self.listofListPoints.append(points) 

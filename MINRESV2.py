@@ -37,6 +37,7 @@ def minres2(A,b,x0=None,tol=1e-5, maxiter=None,plot=False):
         x0 = np.zeros((n,1))
         
     eps=np.finfo(float).eps
+    
 
 def __prodMV(A,v): 
     return np.matmul(A,v)
@@ -44,7 +45,8 @@ def __prodMV(A,v):
 def lanczos(A,b,N, func=__prodMV):
     exit=N
     k=N
-    Q = b.copy()/np.linalg.norm(b)
+    Q = np.zeros((len(b),k+1))
+    Q[:,0] = b.copy()/np.linalg.norm(b)
     alpha = np.zeros(k)
     beta = np.zeros(k+1)
     for m in range(k):
@@ -52,66 +54,39 @@ def lanczos(A,b,N, func=__prodMV):
         if m > 0 : 
             w-= beta[m] * Q[:,m-1]
         alpha[m] = np.dot(Q[:,m], w)
-        w-=np.dot(alpha[m] , Q[:,m])
+        w-=np.dot( Q[:,m], alpha[m])
         beta[m+1]= np.linalg.norm(w)
-        if np.abs(beta[m+1])<1e-10:
-            exit=m
-            print('Iter:',m)
-            break 
-        stack=np.divide(w.copy() , beta[m+1])
-        stack=np.reshape(stack,(len(stack),1))
-        Q = np.hstack((Q,stack))
+        stack=np.divide(w , beta[m+1])
+        Q[:, m+1] = stack
     rbeta = beta[1:-1]
     H = np.diag(alpha)+ np.diag(rbeta, +1) + np.diag(rbeta,-1)
-    return Q,H,exit
+    return Q[:,:-1],H,exit
 
-def MINRES2(A,b:np.ndarray,x0,N, func=__prodMV):
+def MINRES2(A,b:np.ndarray,N, func=__prodMV):
     exit=N
     k=N
-    r:np.ndarray
-    x:np.ndarray
-    if x0 == 0:
-        r = b.copy()
-        x = np.zeros((k,1))
-    else:  
-        r = b - A @ x0
-        x = x0.copy()
-    Q:np.ndarray = r.copy() #/ np.linalg.norm(r)
-    # print(Q.shape)
-    # print(x.shape)
-    alpha: np.double
-    beta: np.double
-    Q_old: np.ndarray
-    for m in range(k):
-        Ar = A @ Q # A * r
-        print(f"Ar: ========={Ar}")
-        alpha = (Ar.T @ Q) / np.linalg.norm(Ar)
-        print(f"alpha: ======={alpha}")
-        x += alpha*Q
-        print(f"x: ======={x}")
-        # print(alpha*Ar)s
-        Q_old = Q.copy()
-        Q -= alpha[0][0]*Ar
-        print(f"Q: ======={Q}")
-        if m >= 1 :
-            beta = (Ar.T @ Q_old) /np.linalg.norm(Ar)
-            Q -= beta * Q_old
-            print(f"Q: ======={Q}")
-        Q = Q / np.linalg.norm(Q)
-        # Ar-=np.dot(alpha[m] , Q[:,m])
-        # beta[m+1]= np.linalg.norm(Ar)
-        # if np.abs(beta[m+1])<1e-10:
-
-        if np.linalg.norm(Q)<1e-10:    
-            exit=m
-            print('Iter:',m, 'residual:',np.linalg.norm(Q))
+    print(N)
+    j:np.ndarray
+    Q:np.ndarray = np.zeros((len(b),k+1))
+    Q[:,0]=np.divide(b,np.linalg.norm(b))
+    H:np.ndarray = np.zeros((k+1,k))
+    for j in range(k):
+        w = A @ Q[:,j] # A * r
+        for i in range(j): 
+            H[i,j] = func(Q[:,i].T,w)
+            w = w - np.dot(Q[:,i] , H[i,j])
+        H[j+1,j] = np.linalg.norm(w)
+        Q[:,j+1]= np.divide(w,H[j+1,j])
+        print('Iter:',j, 'residual:',np.linalg.norm(Q[:,j+1]))
+        if np.linalg.norm(Q[:,j+1])<1e-10:    
+            exit=j
+            print('Iter:',j, 'residual:',np.linalg.norm(Q[:,j+1]))
             break 
         # stack=np.divide(Ar.copy() , beta[m+1]) or np.linalg.norm(alpha*Ar)<= 0
         # stack=np.reshape(stack,(len(stack),1))
         # Q = np.hstack((Q,stack))
-        print('Iter:',m, 'residual:',np.linalg.norm(Q))
-        
-        input('premi per continuare')
+    print('Iter:',0, 'residual:',np.linalg.norm(Q[:,0]))
+    input('premi per continuare')
     # rbeta = beta[1:-1]
     # H = np.diag(alpha)+ np.diag(rbeta, +1) + np.diag(rbeta,-1)
     return Q,exit

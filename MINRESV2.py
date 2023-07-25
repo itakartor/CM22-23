@@ -42,25 +42,45 @@ def minres2(A,b,x0=None,tol=1e-5, maxiter=None,plot=False):
 def __prodMV(A,v): 
     return np.matmul(A,v)
 
-def lanczos(A,b,N, func=__prodMV):
+def lanczos_minres(A,b,N, func=__prodMV):
     exit=N
     k=N
     Q = np.zeros((len(b),k+1))
     Q[:,0] = b.copy()/np.linalg.norm(b)
     alpha = np.zeros(k)
-    beta = np.zeros(k+1)
-    for m in range(k):
-        w = func(A,Q[:,m])
-        if m > 0 : 
-            w-= beta[m] * Q[:,m-1]
-        alpha[m] = np.dot(Q[:,m], w)
-        w-=np.dot( Q[:,m], alpha[m])
-        beta[m+1]= np.linalg.norm(w)
-        stack=np.divide(w , beta[m+1])
-        Q[:, m+1] = stack
-    rbeta = beta[1:-1]
+    beta = np.zeros(k)
+    res=[]
+    for j in range(k):
+        #(B_jq_j+1)w = Aq_j - B_j-1 q_j-1 - alpha_jq_j
+        w = func(A,Q[:,j])   #w = Aq_j
+        if j > 0 : 
+            w-= beta[j-1] * Q[:,j-1]  #w - B_j-1 q_j-1
+        alpha[j] = np.dot(Q[:,j], w) # alpha_j= qj.T Aqj (wj) 
+       #wj
+        w-=np.dot( Q[:,j], alpha[j]) #w - alpha_j q_j
+        beta[j]= np.linalg.norm(w) #  beta_j= ||w_j||_2
+        stack=np.divide(w , beta[j])
+        Q[:, j+1] = stack  #qj+1= w/beta_j
+        if j > 0 : 
+            v=np.eye(j+1,1) * np.linalg.norm(b)
+            rbeta = beta[0:-1]
+            H = np.diag(alpha)+ np.diag(rbeta, +1) + np.diag(rbeta,-1)
+            H = H[:j+1,:j+1]
+        else:
+            v=np.eye(2,1) * np.linalg.norm(b)
+            H = np.zeros((2,1))
+            H[0] = alpha[j]
+            H[1] = beta[j]
+        y = np.linalg.lstsq(H,v,rcond=None)[0]
+        x = np.dot(Q[:,:j+1],y)
+        r = np.subtract(np.dot(A,x),np.reshape(b,(len(b),1)))
+        r = np.linalg.norm(r)
+        res.append(r)
+        if r < 1e-5:
+            break
+    rbeta = beta[0:-1] #real beta array without betaj
     H = np.diag(alpha)+ np.diag(rbeta, +1) + np.diag(rbeta,-1)
-    return Q[:,:-1],H,exit
+    return Q[:,:-1],H,x,j,res
 
 def MINRES2(A,b:np.ndarray,N, func=__prodMV):
     exit=N

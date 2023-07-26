@@ -29,4 +29,3 @@ for inM in listEMatrix:
     print("it:",j)
     plt.pyplot.semilogy(res)
     plt.pyplot.show()
-    break

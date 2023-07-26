@@ -30,7 +30,7 @@ def back_substitution(A: np.ndarray, b: np.ndarray):
     
     return x
 
-def myQR(A,slower=False):
+def QR_Householder(A,slower=False):
     m,n=A.shape
     Q = np.eye(m)
     R= A.copy()
@@ -45,8 +45,34 @@ def myQR(A,slower=False):
         Q[:,j:]= Q[:,j:]@H    
     return Q,R
 
+def givens_rotation(A):
+    """
+    QR-decomposition of rectangular matrix A using the Givens rotation method.
+    """
+
+    # Initialization of the orthogonal matrix Q and the upper triangular matrix R
+    n, m = A.shape
+    Q = np.eye(n)
+    R = np.copy(A)
+
+    rows, cols = np.tril_indices(n, -1, m)
+    for (row, col) in zip(rows, cols):
+        # If the subdiagonal element is nonzero, then compute the nonzero 
+        # components of the rotation matrix
+        if R[row, col] != 0:
+            r = np.sqrt(R[col, col]**2 + R[row, col]**2)
+            c, s = R[col, col]/r, -R[row, col]/r
+
+            # The rotation matrix is highly discharged, so it makes no sense 
+            # to calculate the total matrix product
+            R[col], R[row] = R[col]*c + R[row]*(-s), R[col]*s + R[row]*c
+            Q[:, col], Q[:, row] = Q[:, col]*c + Q[:, row]*(-s), Q[:, col]*s + Q[:, row]*c
+
+    return Q[:, :m], R[:m]
+
 def QR_ls(A: np.ndarray, b: np.ndarray):
-    Q,R=myQR(A)
+    Q,R=QR_Householder(A)
+    #Q,R=givens_rotation(A)
     #Rx=Q.Tb
     m,n=R.shape
     c=np.dot(Q[:,:n].T,b)

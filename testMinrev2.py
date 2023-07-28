@@ -2,7 +2,7 @@ import numpy as np
 import IncidenceMatrixV2 
 import util 
 from scipy.sparse.linalg import minres
-from MINRESV2 import  lanczos_minres
+from MINRESV2 import  lanczos_minres, min_max_eigenvalue
 import matplotlib as plt
 
 #https://sci-hub.ru/https://doi.org/10.1137/9780898719987.ch7
@@ -17,15 +17,22 @@ for inM in listEMatrix:
     print("D shape:", D.shape, "E shape:", E.shape,"B len: ",len(b),"C len: ",len(c))
     A2,b2= util.instanceofMCF(D,E,b,c)
     print("A:",A2.shape,"b",len(b2))
-    print("len",len(b2)*5)
+    print("MaxIter",len(b2)*5)
     print("Test Lanczos Algorithm")
-    A = np.array([[3, 1, 2, 4], [1, 2, 1,3], [2, 1, 3, 1],[4, 3, 1,4]])
-    b = np.array([1, 2, 3,4])
-    #Q,H,x,j,res,exit= lanczos_minres(A,b,maxiter=5)
+    print("Eig A", np.linalg.eig(A2)[0])
+    #A = np.array([[3, 1, 2, 4], [1, 2, 1,3], [2, 1, 3, 1],[4, 3, 1,4]])
+    #b = np.array([1, 2, 3,4])
+    #K_A=np.linalg.cond(A2)
+    #print("condA",K_A)
+    #minA,maxA=min_max_eigenvalue(A2)
+    #print("MINMAX",minA,maxA)
+    #print("KA",np.abs(maxA)/np.abs(minA))
+    Q,T,x,j,res,exit= lanczos_minres(A2,b2,maxiter=116)
+    print("EigT",T.shape,np.linalg.eig(T)[0])
     #print("Residuto:",res,exit)
-    #print("res libreria",minres(A,b))
-    Q,H,x,j,res,exit= lanczos_minres(A2,b2,maxiter=len(b2)*5)
     #lib,exit=minres(A2,b2,show=True)
-    print("it:",j)
+    print("it:",j,"exit Minres:",exit)
+    #print("res libreria",minres(A2,b2,show=True))
     plt.pyplot.semilogy(res)
     plt.pyplot.show()
+    break

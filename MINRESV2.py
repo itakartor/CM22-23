@@ -92,11 +92,16 @@ def __prodMV(A,v):
 def lanczos_minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     #initialize variable
     n = len(b)
-    
+
     if maxiter== None:
         maxiter = n * 5
     
-    exitmsgs=["Exit Minres: A  does not define a symmetric matrix","A solution to Ax = b was found at given tol at iteration {j}","Lucky Breakdown solution of Ax=b with Beta_j=0 was found at iteration {j}"]
+    exitmsgs = [
+        "Exit Minres: A  does not define a symmetric matrix",
+        "A solution to Ax = b was found at given tol at iteration {j}",
+        "Lucky Breakdown solution of Ax=b with Beta_j=0 was found at iteration {j}"
+    ]
+    exit = exitmsgs[1]
     
     #Check A density
     spar_ratio=__sparsity_ratio(A)
@@ -124,7 +129,7 @@ def lanczos_minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     beta = np.zeros(maxiter) #Beta Alpha  at the index 0 will be  Beta_2 
     res=[] #residual array
     #Lanczos Iteraions
-    x1=b.copy()
+    x1=b.copy() # spero che sia solo per inizializzarlo con le giuste dimensioni 
     for j in range(maxiter):
         
         #(B_jq_j+1)w = Aq_j - B_j-1 q_j-1 - alpha_jq_j
@@ -161,7 +166,7 @@ def lanczos_minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
             y = QR_ls(T[:2,:1],v)
             
         x = np.dot(Q[:,:j+1],y)
-        r = np.subtract(np.dot(A,x),np.reshape(b,(len(b),1)))
+        r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
         r = np.linalg.norm(r)
         res.append(r)
         if r < tol:
@@ -170,6 +175,109 @@ def lanczos_minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     #return Q_j and not Q_j+1
     return Q[:,:-1],T[:j+1,:j+1],x,j+1,res,exit
 
+def lanczos_minres2(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
+    #initialize variable
+    n = len(b)
+    if maxiter== None:
+        maxiter = n * 5
+    
+    exitmsgs = [
+        "Exit Minres: A  does not define a symmetric matrix",
+        "A solution to Ax = b was found at given tol at iteration {j}",
+        "Lucky Breakdown solution of Ax=b with Beta_j=0 was found at iteration {j}"
+    ]
+    exit = exitmsgs[1]
+    
+    #Check A density
+    spar_ratio=__sparsity_ratio(A)
+    if spar_ratio > 0.90:
+        nnz=np.nonzero(A)
+        print(f"A is a sparse matrix nonzero element of A = {len(nnz[0])} over {A.shape[0] * A.shape[1]} ")
+    else:
+        print("A is a dense matrix")
+    
+    #Check if A is symmetric
+    if not np.allclose(A, A.T):
+        return exitmsgs[0]
+    
+    #Check start point
+    if x0 == None:
+        x = np.zeros(A.shape[0])
+        r = b.copy()
+    else:
+        x = x0
+        r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x0))
+    b_norm=np.linalg.norm(b)
+    # beta1=np.linalg.norm(r) # non so se sia corretto nel caso in cui il residuo sua diverso da b
+    Q = np.zeros((len(b),maxiter))
+    P = np.zeros((len(b),maxiter))
+    Q[:,0] = r/np.linalg.norm(r) #this can be considered as Beta_1 np.linalg.norm(b) and b as w_1
+    T = np.zeros((maxiter+1,maxiter)) #Triadiagonal Matrix
+    alpha = np.zeros(maxiter) #Vector Alpha
+    beta = np.zeros(maxiter) #Beta Alpha  at the index 0 will be  Beta_2 
+    res=[] #residual array
+    #Lanczos Iteraions
+    x1=b.copy() # spero che sia solo per inizializzarlo con le giuste dimensioni 
+    for j in range(maxiter - 1):
+        
+        #(B_jq_j+1)w = Aq_j - B_j-1 q_j-1 - alpha_jq_j
+        w = func(A,Q[:,j])   #w = Aq_j per me qui ci deve stare un'altra variabile
+        if j > 0 :  # altrimenti perdo r iniziale 
+            w-= beta[j-1] * Q[:,j-1]  #w - B_j-1 q_j-1
+        alpha[j] = np.dot(Q[:,j], w) # alpha_j= qj.T Aqj (wj) 
+        #wj
+        w-=np.dot( Q[:,j], alpha[j]) #w - alpha_j q_j
+        
+        beta[j] = np.linalg.norm(w) #  beta_j+1 = ||w_j||_2
+        q_next=np.divide(w , beta[j])
+        Q[:, j+1] = q_next  #qj+1= w/beta_j
+        
+        if j > 0 : 
+            # v=np.eye(j+1,1) * b_norm
+            T[j,j] = alpha[j]
+            T[j-1,j] = beta[j-1]
+            T[j+1,j] = beta[j]
+        else:
+            # v=np.eye(2,1) * b_norm
+            T[0,0] = alpha[j]
+            T[1,0] = beta[j]
+        
+        F,R=givens_rotation(T)
+        # R_ = np.reshape(R,(R.shape[0]-1,R.shape[1])).copy()
+        # print(f'P shape {P.shape}')
+        # print(f'R_ shape {R_.shape}')
+        # print(f'Q shape {Q.shape}')
+        
+        if(j >= 2): 
+            P[:][j] = np.divide((Q[:,j] - R[j-1][j]*P[:][j-1] - R[j-2][j]*P[j-2]),R[j][j])
+        elif(j == 1):
+            P[:][j] = np.divide((Q[:,j] - R[j-1][j]*P[:][j-1]),R[j][j])
+        else:
+            P[:][j] = np.divide(Q[:,j],R[j][j])
+
+        if isclose(beta[j],0.0):
+            exit=exitmsgs[2].format(j=j)
+            break    
+        #print("y numpy:",np.linalg.lstsq(H,v,rcond=None)[0])
+        
+        # if j > 0 : 
+        #     y = QR_ls(T[:j+1,:j+1],v) 
+        # else:
+        #     y = QR_ls(T[:2,:1],v)
+
+        # x = np.dot(Q[:,:j+1],y)
+        # print(f'F_j: {F[0][j]} P_j: {P[:][j]} v[0][0]: {v[0][0]}')
+        # input('premi per andare avanti')
+        x += b_norm*F[0][j]*P[:][j]
+        r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
+        r = np.linalg.norm(r)
+        print(f'residual: {r}')
+        res.append(r)
+        if r < tol:
+            exit=exitmsgs[1].format(j=j)
+            break
+    #return Q_j and not Q_j+1
+    return Q[:,:-1],T[:j+1,:j+1],x,j+1,res,exit
 #use lib to find eigenvalues of matix H
 def eigenvalues(A):
     return np.linalg.eig(A)[0]

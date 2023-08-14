@@ -89,7 +89,7 @@ def __prodMV(A,v):
     return np.matmul(A,v)
 
 
-def lanczos_minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
+def lanczos_minres2(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     #initialize variable
     n = len(b)
 
@@ -175,7 +175,7 @@ def lanczos_minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     #return Q_j and not Q_j+1
     return Q[:,:-1],T[:j+1,:j+1],x,j+1,res,exit
 
-def lanczos_minres2(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
+def lanczos_minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     #initialize variable
     n = len(b)
     if maxiter== None:
@@ -211,7 +211,7 @@ def lanczos_minres2(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     # beta1=np.linalg.norm(r) # non so se sia corretto nel caso in cui il residuo sua diverso da b
     Q = np.zeros((len(b),maxiter))
     P = np.zeros((len(b),maxiter))
-    Q[:,0] = r/np.linalg.norm(r) #this can be considered as Beta_1 np.linalg.norm(b) and b as w_1
+    Q[:,0] = np.divide(r,np.linalg.norm(r)) #this can be considered as Beta_1 np.linalg.norm(b) and b as w_1
     T = np.zeros((maxiter+1,maxiter)) #Triadiagonal Matrix
     alpha = np.zeros(maxiter) #Vector Alpha
     beta = np.zeros(maxiter) #Beta Alpha  at the index 0 will be  Beta_2 
@@ -224,9 +224,9 @@ def lanczos_minres2(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
         w = func(A,Q[:,j])   #w = Aq_j per me qui ci deve stare un'altra variabile
         if j > 0 :  # altrimenti perdo r iniziale 
             w-= beta[j-1] * Q[:,j-1]  #w - B_j-1 q_j-1
-        alpha[j] = np.dot(Q[:,j], w) # alpha_j= qj.T Aqj (wj) 
+        alpha[j] = np.dot(w,Q[:,j]) # alpha_j= qj.T Aqj (wj) 
         #wj
-        w-=np.dot( Q[:,j], alpha[j]) #w - alpha_j q_j
+        w-=np.dot(alpha[j],Q[:,j]) #w - alpha_j q_j
         
         beta[j] = np.linalg.norm(w) #  beta_j+1 = ||w_j||_2
         q_next=np.divide(w , beta[j])
@@ -242,18 +242,24 @@ def lanczos_minres2(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
             T[0,0] = alpha[j]
             T[1,0] = beta[j]
         
-        F,R=givens_rotation(T)
+        F,R=givens_rotation(T) #Q R
         # R_ = np.reshape(R,(R.shape[0]-1,R.shape[1])).copy()
         # print(f'P shape {P.shape}')
         # print(f'R_ shape {R_.shape}')
         # print(f'Q shape {Q.shape}')
-        
+        # print(R[j][j])
+        # print(R[j,j])
+        # print(R[:,j])
+        # print('++++++++++++++++++++++++++++++++++++++++++++++')
+        # print(R[:][j])
+        # print(R[:,:])
+        # input('premi')
         if(j >= 2): 
-            P[:][j] = np.divide((Q[:,j] - R[j-1][j]*P[:][j-1] - R[j-2][j]*P[j-2]),R[j][j])
+            P[:,j] = np.divide((Q[:,j] - np.dot(R[j-1,j],P[:,j-1]) - np.dot(R[j-2,j],P[:,j-2])),R[j,j])
         elif(j == 1):
-            P[:][j] = np.divide((Q[:,j] - R[j-1][j]*P[:][j-1]),R[j][j])
+            P[:,j] = np.divide((Q[:,j] - np.dot(R[j-1,j],P[:,j-1])),R[j,j])
         else:
-            P[:][j] = np.divide(Q[:,j],R[j][j])
+            P[:,j] = np.divide(Q[:,j],R[j,j])
 
         if isclose(beta[j],0.0):
             exit=exitmsgs[2].format(j=j)
@@ -268,7 +274,7 @@ def lanczos_minres2(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
         # x = np.dot(Q[:,:j+1],y)
         # print(f'F_j: {F[0][j]} P_j: {P[:][j]} v[0][0]: {v[0][0]}')
         # input('premi per andare avanti')
-        x += b_norm*F[0][j]*P[:][j]
+        x += np.dot(np.dot(b_norm,F[0,j]),P[:,j]) 
         r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
         r = np.linalg.norm(r)
         print(f'residual: {r}')

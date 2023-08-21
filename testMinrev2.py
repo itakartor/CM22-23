@@ -3,7 +3,6 @@ import IncidenceMatrixV2
 import util 
 from scipy.sparse.linalg import minres
 from MINRESV2 import  lanczos_minres2, min_max_eigenvalue
-from MINRESOLD import  lanczos_minres2 as minresold
 
 import matplotlib.pyplot as plt
 

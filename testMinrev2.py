@@ -2,36 +2,36 @@ import numpy as np
 import IncidenceMatrixV2 
 import util 
 from scipy.sparse.linalg import minres
-from MINRESV2 import  lanczos_minres2, min_max_eigenvalue
+from MINRESV3 import  minres
 
 import matplotlib.pyplot as plt
 
-#https://sci-hub.ru/https://doi.org/10.1137/9780898719987.ch7
-#https://www.cs.cornell.edu/courses/cs6220/2017fa/CS6220_Lecture10.pdf
+#bib reference
+#https://web.stanford.edu/group/SOL/software/symmlq/PS75.pdf
+#https://www.dmsa.unipd.it/~berga/Teaching/Phd/minres.pdf
 
+#Build the Incidence Matrix of the graphs generated |complete graph ,grid graph,rmf graph|
 listEMatrix = IncidenceMatrixV2.buildIncidenceMatrix()
+
+#for each Incdence matrix we build the Matrix A and the vector B from |D   E|=|c|
+#                                                                     |E^t 0| |b|
 for inM in listEMatrix:
     E:np.ndarray = inM.m
     D:np.ndarray = util.diagonalM(E.shape[1])
     c:np.ndarray = [n.deficit for  n in inM.nodes]
     b:np.ndarray = [c.cost for c in inM.arcs]
+    print("Shapes:")
     print("D shape:", D.shape, "E shape:", E.shape,"B len: ",len(b),"C len: ",len(c))
     A2,b2= util.instanceofMCF(D,E,b,c)
+    print("Result A and b shapes")
     print("A:",A2.shape,"b",len(b2))
-    print("MaxIter",len(b2)*5)
-    #A = np.array([[3, 1, 2, 4], [1, 2, 1,3], [2, 1, 3, 1],[4, 3, 1,4]])
-    #b = np.array([1, 2, 3,4])
-    #K_A=np.linalg.cond(A2)
-    #print("condA",K_A)
-    #minA,maxA=min_max_eigenvalue(A2)
-    #print("MINMAX",minA,maxA)
-    #print("KA",np.abs(maxA)/np.abs(minA))
-    j,x,xc,res,res2,exit= lanczos_minres2(A2,b2)
-    #print("Residuto:",res,exit)
-    #lib,exit=minres(A2,b2,show=True)
+    print("MinRes  MaxIter",len(b2)*5)
+    j,x,xc,res,res2,exit= minres(A2,b2)
     print("it:",j,"exit Minres:",exit)
     print("Diff Residui ",res2[-1] - res[-1] )
     #print("res libreria",minres(A2,b2,show=True))
+    
+    #Plot of the residual
     fig, (ax1, ax2) = plt.subplots(2, 1)
     fig.suptitle('MinRes')
     

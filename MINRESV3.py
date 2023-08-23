@@ -17,18 +17,15 @@ def householder_vector(x):
 def back_substitution(A: np.ndarray, b: np.ndarray):
     n = len(b)
     x = np.zeros_like(b)
+    
     if A.shape[1] == 1 :
         return b[0]/A[0,0]
-
     x[n-1] = b[n-1]/A[n-1, n-1]
-    C = np.zeros((n,n))
     for i in range(n-2, -1, -1):
         bb = 0
         for j in range (i+1, n):
             bb += A[i, j]*x[j]
-        C[i, i] = b[i] - bb
-        x[i] = C[i, i]/A[i, i]
-    
+        x[i] = (b[i] - bb)/A[i, i]
     return x
 
 def QR_Householder(A,slower=False):
@@ -46,7 +43,20 @@ def QR_Householder(A,slower=False):
         Q[:,j:]= Q[:,j:]@H    
     return Q,R
 
-   
+def tridiag(T,beta1,alpha,beta2):
+    if T.shape!=(0,0) : 
+            zerorow=np.zeros((1,T.shape[1]))
+            T=np.vstack(([T,zerorow]))
+            newcol=np.zeros((T.shape[0],1))
+            newcol[-3]=beta1
+            newcol[-2]=alpha
+            newcol[-1]=beta2
+            T=np.hstack(([T,newcol]))
+    else:
+        T=np.vstack((alpha,beta2))
+        T.reshape((2,1))
+    return T
+
 def QR_givens_rotation(A):
     """
     QR-decomposition of rectangular matrix A using the Givens rotation method.
@@ -73,7 +83,7 @@ def QR_givens_rotation(A):
             #                                                                                               [-s c]          
             Q[:, col], Q[:, row] = Q[:, col]*c + Q[:, row]*(-s), Q[:, col]*s + Q[:, row]*c
             
-    return Q[:,:m], R[:m,:]
+    return Q, R
 
 def QR_ls(A: np.ndarray, b: np.ndarray):
     #Q,R=QR_Householder(A)
@@ -81,8 +91,8 @@ def QR_ls(A: np.ndarray, b: np.ndarray):
     #Ax=b -> QRx=b-> Rx=Q.T*b
     #Rx=Q.T*b
     m,n=R.shape
-    c=np.dot(Q.T,b)
-    x=back_substitution(R,c)
+    c=np.dot(Q[:,:-1].T,b)
+    x=back_substitution(R[:-1],c)
     return x
 
 def __prodMV(A,v): 
@@ -90,17 +100,19 @@ def __prodMV(A,v):
 
 
 def lanczos(A,v1,v0,beta1,func=__prodMV):
-    w = func(A,v1)   #w = Aq_j 
+    pk= func(A,v1)   #p = Av_j 
     
-    alpha = np.dot(v1, w) # alpha_j = qj.T Aqj (wj) 
+    alpha = np.dot(v1, pk) # alpha_j = vj.T Avj (Avj=pk) 
     
-    w-= alpha * v1 #w - alpha_j q_j
-    v_next = w - beta1 * v0 #
+    pk-= alpha * v1 #w - alpha_j q_j
+    
+    v_next = pk - beta1 * v0 
     
     beta2 = np.linalg.norm(v_next) #  beta_j+1 = ||w_j||_2
     
     if not isclose(beta2,0.0):
-        v_next= np.divide(v_next , beta2)
+        v_next= np.divide(v_next , beta2) #v_next normalization
+    
     return alpha,beta2,v_next
     
     
@@ -152,7 +164,7 @@ def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     p1 = p0 = pk =0 #Vector of the matrix P_k= V_kR^-1 -> P_kR = V_k where R is a triagonal matrix of T_k QR factorization
     res2:float=[] # residual of second solution
     res:float=[] #residual of firse solution
-    
+    T=np.zeros((0, 0)) #Initialize Empty Tridiagonal Matrix
     #Iteraions
     for j in range(maxiter):
         #Lanczos step iteration
@@ -165,17 +177,7 @@ def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
         V=np.hstack((V,v1.reshape((len(v1),1))))
 
         #Triagonal matrix T construction after Lanczos step
-        if j > 0 : 
-            zerorow=np.zeros((1,T.shape[1]))
-            T=np.vstack(([T,zerorow]))
-            newcol=np.zeros((j+2,1))
-            newcol[-3]=beta1
-            newcol[-2]=alpha
-            newcol[-1]=beta2
-            T=np.hstack(([T,newcol]))
-        else:
-            T=np.vstack((alpha,beta2))
-            T.reshape((2,1))
+        T=tridiag(T,beta1,alpha,beta2)
         
         #if betaj+1 == 0 breakdown
         if isclose(beta2,0.0):
@@ -185,15 +187,12 @@ def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
         #update bj=bj+1 for the next iteration
         beta1=beta2
 
-        #vector (Beta_1 e1) for the iteration j
-        v = np.eye(j+2,1) * b_norm 
 
         #QR factorization of T using givens rotations
         G,R=QR_givens_rotation(T)
         
         #G.T(beta_1 * e1)
-        tk=np.dot(G.T,v)
-        
+        tj=G[0,j]*b_norm
         #Computation of the last 3  Pk vectors
         if j == 0 :
             pk = v0 / R[j,j]
@@ -207,14 +206,15 @@ def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
         p0=p1
         p1=pk
         #increment of the solution xc
-        xc =  xc + tk[-1]*pk
+        xc +=  tj*pk
         
         #Computation of the residual of the solution
         r2 = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,xc))
         r2 = np.linalg.norm(r2)
         res2.append(r2)
         
-        
+        #vector (Beta_1 e1) for the iteration j
+        v = np.eye(j+2,1) * b_norm 
         #Working solution using V_k in memory for discover y_k = T_k-b1e1
         y = QR_ls(T,v) 
         
@@ -256,3 +256,4 @@ def print_first_N(a,N):
     for i in range(max):
         print('%1.5g\t' % acopy[i])
     print('')
+

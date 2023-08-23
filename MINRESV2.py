@@ -303,3 +303,89 @@ def print_first_N(a,N):
     for i in range(max):
         print('%1.5g\t' % acopy[i])
     print('')
+
+
+def SymOrtho(a, b):
+    if b == 0:
+        s = 0
+        r = abs(a)
+        if a == 0:
+            c = 1 
+        else:
+            c = np.sign(a)
+    elif a == 0:
+        c = 0
+        s = np.sign(b)
+        r = abs(b)
+    elif abs(b) > abs(a):
+        t = a/b
+        s = np.sign(b)/hypot(1,t)
+        c = s*t 
+        r = b/s
+    elif abs(a) > abs(b):
+        t = b/a
+        c = np.sign(a)/hypot(1,t)
+        s = c*t
+        r = a/c
+        
+    return c, s, r
+
+def lanczos(A,v1,v0,beta1,func=__prodMV):
+    pk= func(A,v1)   #p = Av_j 
+    
+    alpha = np.dot(v1, pk) # alpha_j = vj.T Avj (Avj=pk) 
+    
+    pk-= alpha * v1 #w - alpha_j q_j
+    
+    v_next = pk - beta1 * v0 
+    
+    beta2 = np.linalg.norm(v_next) #  beta_j+1 = ||w_j||_2
+    
+    if not isclose(beta2,0.0):
+        v_next= np.divide(v_next , beta2) #v_next normalization
+    
+    return alpha,beta2,v_next
+    
+    
+def minresSlide(A,b,maxit):
+    beta1=np.linalg.norm(b)
+    v0=0
+    v1=np.divide(b,beta1)
+    c0=-1
+    s0=0
+    d1=d0=x=np.zeros(len(b))
+    k=1
+    delta1=eps=0
+    phi0=beta1
+    res=[]
+    while k < maxit:
+       alphak,beta2,v_next=lanczos(A,v1,v0,beta1)
+       delta2= c0*delta1 + s0 * alphak
+       gamma = s0 * delta1 - c0 * alphak
+      
+       delta1_next = -c0 * beta2
+       ck,sk,gamma=SymOrtho(gamma,beta2)
+       tk = ck*phi0
+       phik=sk*phi0
+       
+       if gamma!=0:
+            dk=np.divide((v1-delta2*d1-eps*d0),gamma)
+       x = x+ tk * dk
+       eps = s0 * beta2
+       phi0=phik
+       delta1=delta1_next
+       c0=ck
+       s0=sk
+       beta1=beta2
+       v0=v1
+       v1=v_next
+       d0=d1
+       d1=dk
+       k=k+1
+       
+       #Computation of the residual
+       r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
+       r = np.linalg.norm(r)
+       print(r)
+       res.append(r)
+    return k,res

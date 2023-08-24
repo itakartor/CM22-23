@@ -2,7 +2,7 @@ import numpy as np
 import IncidenceMatrixV2 
 import util 
 from scipy.sparse.linalg import minres
-from MINRESV3 import  minres,minresSlide
+from MINRESV3 import  minres
 
 import matplotlib.pyplot as plt
 
@@ -26,21 +26,37 @@ for inM in listEMatrix:
     print("Result A and b shapes")
     print("A:",A2.shape,"b",len(b2))
     print("MinRes  MaxIter",len(b2)*5)
-    j,x,xc,res,res2,exit= minres(A2,b2)
-    k,res3=minresSlide(A2,b2,115)
+    j,x,xc,r,r2,exit= minres(A2,b2,maxiter=116)
+    res=r
+    res2=r2
+    """j,x,xc,r,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
+    res2+=r2
+    j,x,xc,r,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
+    res2+=r2
+    j,x,xc,rs,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
+    res2+=r2
+    j,x,xc,rs,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
+    res2+=r2
+    j,x,xc,rs,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
+    res2+=r2
+    j,x,xc,rs,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
+    res2+=r2"""
+
+
+
+    #k,res3=minresSlide(A2,b2,115)
     print("it:",j,"exit Minres:",exit)
-    print("Diff Residui ",res2[-1] - res[-1] )
     #print("res libreria",minres(A2,b2,show=True))
-    
     #Plot of the residual
-    fig, (ax1, ax2) = plt.subplots(2, 1)
+    
+    fig,(ax1, ax2) = plt.subplots(2, 1)
     fig.suptitle('MinRes')
     
-    ax1.semilogy(res2,linestyle="dotted",color="green")
+    ax1.semilogy(res,linestyle="dotted",color="green")
     ax1.set_ylabel('Residual')
     ax1.set_xlabel("Iteration")
     
-    ax2.semilogy(res3,linestyle="solid",color="red")
+    ax2.semilogy(res2,linestyle="solid",color="red")
     ax2.set_xlabel('Iteration')
     ax2.set_ylabel('Residual')
     

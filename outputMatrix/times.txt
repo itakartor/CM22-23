@@ -271,3 +271,10 @@ Function start_CG Took 0.2467 seconds
 Function invSimpleDiag Took 0.0001 seconds
 Function invSimpleDiag Took 0.0021 seconds
 Function invSimpleDiag Took 0.0001 seconds
+Function invSimpleDiag Took 0.0001 seconds
+Function invSimpleDiag Took 0.0002 seconds
+Function invSimpleDiag Took 0.0035 seconds
+Function getListPointCG Took 0.0028 seconds
+Function getListPointCG Took 0.0041 seconds
+Function getListPointCG Took 6.2341 seconds
+Function start_CG Took 48.5010 seconds

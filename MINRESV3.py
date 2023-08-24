@@ -102,7 +102,7 @@ def __prodMV(A,v):
 def lanczos(A,v1,v0,beta1,func=__prodMV):
     pk= func(A,v1)   #p = Av_j 
     
-    alpha = np.dot(v1, pk) # alpha_j = vj.T Avj (Avj=pk) 
+    alpha = np.dot(v1.T, pk) # alpha_j = vj.T Avj (Avj=pk) 
     
     pk-= alpha * v1 #w - alpha_j q_j
     
@@ -116,7 +116,7 @@ def lanczos(A,v1,v0,beta1,func=__prodMV):
     return alpha,beta2,v_next
     
     
-def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
+def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
     #initialize variable
     
     n = len(b)
@@ -126,8 +126,8 @@ def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
     exitmsgs = [
         "Exit Minres: A  does not define a symmetric matrix",
         "A solution to Ax = b was found at given tol at iteration {j}",
-        "Lucky Breakdown solution of Ax=b with Beta_j=0 was found at iteration {j}"
-        "Exit because max iteration reached it:{j}"
+        "Lucky Breakdown solution of Ax=b with Beta_j=0 was found at iteration {j}",
+        "Exit because max iteration reached iteration:{j}"
     ]
     exit = exitmsgs[1]
     
@@ -144,27 +144,27 @@ def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
         return exitmsgs[0]
     
     #Check start point
-    if x0 == None:
+    if len(x0)==0:
         w:np.ndarray = b.copy()
-        #incomplete solution
-        x:np.ndarray = np.zeros(len(b))
+        w=w.reshape((len(b),1))
+        x0:np.ndarray = np.zeros((len(b),1))
         #xc solution
-        xc:np.ndarray = np.zeros(len(b))
+        xc:np.ndarray = np.zeros((len(b),1))
     else:
         w:np.ndarray = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x0))
-        x:np.ndarray=x0.copy()
         xc:np.ndarray = x0.copy()
     
     b_norm:float=np.linalg.norm(w) #Beta1 norm
     beta1:float  = b_norm #beta1 -> betaj-1
     v0:np.ndarray = 0
     v1:np.ndarray = w/beta1 # first vector of V
-    V = np.array(v1.reshape((len(v1),1)))
-    V = V.reshape((len(v1),1))
+    V = v1
     p1 = p0 = pk =0 #Vector of the matrix P_k= V_kR^-1 -> P_kR = V_k where R is a triagonal matrix of T_k QR factorization
+    
     res2:float=[] # residual of second solution
     res:float=[] #residual of firse solution
     T=np.zeros((0, 0)) #Initialize Empty Tridiagonal Matrix
+    
     #Iteraions
     for j in range(maxiter):
         #Lanczos step iteration
@@ -198,15 +198,18 @@ def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
             pk = v0 / R[j,j]
         if j == 1 :
             pk= np.divide(v0 - p0 * R[j-1,j],R[j,j])
+
         if j>1 :
             p01=p1 * R[j-1,j] + p0 * R[j-2,j]
             diff=np.subtract(v0,p01)
             pk = np.divide(diff,R[j,j])
+
         #update 3 vectors for the next stepo    
         p0=p1
         p1=pk
         #increment of the solution xc
-        xc +=  tj*pk
+        xc = xc + np.dot(tj,pk.reshape(len(pk),1))
+        
         
         #Computation of the residual of the solution
         r2 = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,xc))
@@ -220,19 +223,22 @@ def minres(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
         
         #Computation of solution xk = Vk @ yk    
         x = np.dot(V[:,:-1],y)
+        x=x.reshape(len(x),1)
         
+        x+=x0
         #Computation of the residual
         r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
         r = np.linalg.norm(r)
+        
         res.append(r)
         #check if r is under the tollerance
-        
-        if r < tol:
+        if r2 < tol:
             exit=exitmsgs[1].format(j=j)
             break
+    
     #check if exit because maxiteration reached
-    if j==maxiter:
-        exit=exit[3].format(j=j)
+    if j+1==maxiter:
+        exit=exitmsgs[3].format(j=j+1)
         
     return j+1,x,xc,res,res2,exit
 

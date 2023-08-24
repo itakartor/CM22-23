@@ -154,7 +154,6 @@ def lanczos_minres2(A, b , x0=None,tol=1e-5, maxiter=None, func=__prodMV):
             T[0,0] = alpha[j]
             T[1,0] = beta[j]
         ###TO DO
-        x1= x + alpha[j] * w    
         if isclose(beta[j],0.0):
             exit=exitmsgs[2].format(j=j)
             break    

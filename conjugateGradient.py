@@ -22,7 +22,6 @@ class ConjugateGradient:
 
     def __init__(self,eMatrices:list[IncidenceMatrix]):
         self.listIstancesProblem = []
-        self.listofPoints = []
         # print(f"lunghezza {len(eMatrices)}")
         for i in range(len(eMatrices)):
             #print("I:",i)
@@ -56,10 +55,10 @@ class ConjugateGradient:
             c = np.append(c,[[node.deficit]])
         return c
     
-    def buildArrayCosts(self,dictArcs:dict) -> np.array:
+    def buildArrayCosts(self,listArcs:dict) -> np.array:
         b = np.array([])
-        for key in dictArcs.keys():
-            b = np.append(b,[[dictArcs[key].cost]])
+        for arc in listArcs:
+            b = np.append(b,[[arc.cost]])
         return b
 
     # algorithm
@@ -121,7 +120,8 @@ class ConjugateGradient:
         w.close()
         print(f"last iteration: {last_iteration}, residual: {retTol[0][0]}")
 
-        return listPoints
+        # return listPoints
+        return yGraph
 
     #compute the conjugate algorithm for all the problem instances
     @timeit
@@ -151,7 +151,8 @@ class ConjugateGradient:
                 plt.subplot(3,1,i)
                 plt.plot(points.listX,points.listY, label = f'iteration{i}')
                 i += 1
-            self.listofListPoints.append(points) 
+            self.listofListPoints.extend(points) 
+
         if draw_graph:
             plt.xlabel('X-axis')
             plt.ylabel('Y-axis')
@@ -159,4 +160,4 @@ class ConjugateGradient:
             # show a legend on the plot
             plt.legend()
             plt.show()
-        return self.listofPoints
+        return self.listofListPoints

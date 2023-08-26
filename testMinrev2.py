@@ -3,6 +3,7 @@ import IncidenceMatrixV2
 import util 
 from scipy.sparse.linalg import minres
 from MINRESV3 import  minres
+from conjugateGradient import ConjugateGradient as CG
 
 import matplotlib.pyplot as plt
 
@@ -32,9 +33,14 @@ for inM in listEMatrix:
     #     Ai[i,i] = Ai[i,i] + np.random.rand()   
     #     bi[i] = np.random.rand()   
     # j,x,xc,r,r2,exit= minres(Ai,bi,maxiter=5)
-    j,x,xc,r,r2,exit= minres(A2,b2,maxiter=A2.shape[0])
-    res=r
-    res2=r2
+    # j,x,xc,r,r2,exit= minres(A2,b2,maxiter=A2.shape[0])
+    
+    j,xc,r2,exit= minres(A2,b2,maxiter=A2.shape[0])
+    
+    conjugate = CG([inM])
+    res = conjugate.start_CG()
+    
+    # res=r
     """j,x,xc,r,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
     res2+=r2
     j,x,xc,r,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
@@ -51,18 +57,18 @@ for inM in listEMatrix:
 
 
     #k,res3=minresSlide(A2,b2,115)
-    print("it:",j,"exit Minres:",exit)
+    # print("it:",j,"exit Minres:",exit)
     #print("res libreria",minres(A2,b2,show=True))
     #Plot of the residual
     
     fig,(ax1, ax2) = plt.subplots(2, 1)
-    fig.suptitle('MinRes')
+    fig.suptitle('Conjugate Gradient & MinRes')
     
     ax1.semilogy(res,linestyle="dotted",color="green")
     ax1.set_ylabel('Residual')
     ax1.set_xlabel("Iteration")
     
-    ax2.semilogy(res2,linestyle="solid",color="red")
+    ax2.semilogy(r2,linestyle="solid",color="red")
     ax2.set_xlabel('Iteration')
     ax2.set_ylabel('Residual')
     

@@ -158,11 +158,11 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
     # print(f'w {w.shape}')
     v1:np.ndarray = np.divide(w,beta1) # first vector of V
     v0:np.ndarray = np.zeros((len(v1),1))
-    V = v1.copy()
+    # V = v1.copy()
     p1 = p0 = pk = np.zeros((len(v1),1)) #Vector of the matrix P_k= V_kR^-1 -> P_kR = V_k where R is a triagonal matrix of T_k QR factorization
     
     res2:list[float] = [] # residual of second solution
-    res:list[float] = [] #residual of firse solution
+    # res:list[float] = [] #residual of firse solution
     T = np.zeros((0, 0)) #Initialize Empty Tridiagonal Matrix
     
     # print(f'A {A.shape}')
@@ -182,7 +182,7 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         v1 = v_next.copy()
         
         #Update of Martix V of Krylov space that we need to eliminate
-        V = np.hstack((V,v1.reshape((len(v1),1))))
+        # V = np.hstack((V,v1.reshape((len(v1),1))))
 
         #Triagonal matrix T construction after Lanczos step
         T = tridiag(T,beta1,alpha,beta2)
@@ -236,22 +236,22 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         res2.append(r2)
         
         #vector (Beta_1 e1) for the iteration j
-        v = np.eye(j+2,1) * b_norm 
-        #Working solution using V_k in memory for discover y_k = T_k-b1e1
-        y = QR_ls(T,v) 
+        # v = np.eye(j+2,1) * b_norm 
+        # #Working solution using V_k in memory for discover y_k = T_k-b1e1
+        # y = QR_ls(T,v) 
         
-        #Computation of solution xk = Vk @ yk    
-        x = np.dot(V[:,:-1],y)
-        x = x.reshape(len(x),1)
+        # #Computation of solution xk = Vk @ yk    
+        # x = np.dot(V[:,:-1],y)
+        # x = x.reshape(len(x),1)
         
-        x = x + x0
+        # x = x + x0
         #Computation of the residual
-        r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
-        r = np.linalg.norm(r)
+        # r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
+        # r = np.linalg.norm(r)
         
-        res.append(r)
+        # res.append(r)
         #check if r is under the tollerance
-        if r2 < tol:
+        if r2 < tol*tol:
             exit=exitmsgs[1].format(j=j)
             break
         
@@ -294,7 +294,8 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
     if j+1 == maxiter:
         exit = exitmsgs[3].format(j=j+1)
         
-    return j+1,x,xc,res,res2,exit
+    # return j+1,x,xc,res,res2,exit
+    return j+1,xc,res2,exit
 
 
 #use lib to find eigenvalues of matix H

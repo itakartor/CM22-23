@@ -24,7 +24,7 @@ def back_substitution(A: np.ndarray, b: np.ndarray):
     for i in range(n-2, -1, -1):
         bb = 0
         for j in range (i+1, n):
-            bb += A[i, j]*x[j]
+            bb = bb + A[i, j]*x[j]
         x[i] = (b[i] - bb)/A[i, i]
     return x
 
@@ -90,7 +90,6 @@ def QR_ls(A: np.ndarray, b: np.ndarray):
     Q,R=QR_givens_rotation(A)
     #Ax=b -> QRx=b-> Rx=Q.T*b
     #Rx=Q.T*b
-    m,n=R.shape
     c=np.dot(Q[:,:-1].T,b)
     x=back_substitution(R[:-1],c)
     return x
@@ -100,18 +99,18 @@ def __prodMV(A,v):
 
 
 def lanczos(A,v1,v0,beta1,func=__prodMV):
-    pk= func(A,v1)   #p = Av_j 
+    pk = func(A,v1)   #p = Av_j 
     
     alpha = np.dot(v1.T, pk) # alpha_j = vj.T Avj (Avj=pk) 
     
-    pk-= alpha * v1 #w - alpha_j q_j
+    pk = pk - alpha * v1 #w - alpha_j q_j
     
     v_next = pk - beta1 * v0 
     
     beta2 = np.linalg.norm(v_next) #  beta_j+1 = ||w_j||_2
     
     if not isclose(beta2,0.0):
-        v_next= np.divide(v_next , beta2) #v_next normalization
+        v_next = np.divide(v_next , beta2) #v_next normalization
     
     return alpha,beta2,v_next
     
@@ -132,9 +131,9 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
     exit = exitmsgs[1]
     
     #Check A density
-    spar_ratio=__sparsity_ratio(A)
+    spar_ratio =__sparsity_ratio(A)
     if spar_ratio > 0.90:
-        nnz=np.nonzero(A)
+        nnz = np.nonzero(A)
         print(f"A is a sparse matrix nonzero element of A = {len(nnz[0])} over {A.shape[0] * A.shape[1]} ")
     else:
         print("A is a dense matrix")
@@ -144,9 +143,9 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         return exitmsgs[0]
     
     #Check start point
-    if len(x0)==0:
+    if len(x0) == 0:
         w:np.ndarray = b.copy()
-        w=w.reshape((len(b),1))
+        w = w.reshape((len(b),1))
         x0:np.ndarray = np.zeros((len(b),1))
         #xc solution
         xc:np.ndarray = np.zeros((len(b),1))
@@ -154,62 +153,82 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         w:np.ndarray = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x0))
         xc:np.ndarray = x0.copy()
     
-    b_norm:float=np.linalg.norm(w) #Beta1 norm
-    beta1:float  = b_norm #beta1 -> betaj-1
-    v0:np.ndarray = 0
-    v1:np.ndarray = w/beta1 # first vector of V
-    V = v1
-    p1 = p0 = pk =0 #Vector of the matrix P_k= V_kR^-1 -> P_kR = V_k where R is a triagonal matrix of T_k QR factorization
+    b_norm:float = np.linalg.norm(w) #Beta1 norm
+    beta1:float = b_norm #beta1 -> betaj-1
+    # print(f'w {w.shape}')
+    v1:np.ndarray = np.divide(w,beta1) # first vector of V
+    v0:np.ndarray = np.zeros((len(v1),1))
+    V = v1.copy()
+    p1 = p0 = pk = np.zeros((len(v1),1)) #Vector of the matrix P_k= V_kR^-1 -> P_kR = V_k where R is a triagonal matrix of T_k QR factorization
     
-    res2:float=[] # residual of second solution
-    res:float=[] #residual of firse solution
-    T=np.zeros((0, 0)) #Initialize Empty Tridiagonal Matrix
+    res2:list[float] = [] # residual of second solution
+    res:list[float] = [] #residual of firse solution
+    T = np.zeros((0, 0)) #Initialize Empty Tridiagonal Matrix
     
+    # print(f'A {A.shape}')
+    # print(f'b {b.shape}')
+    # print(f'w {w.shape}')
+    # print(f'x0 {x0.shape}')
+    # print(f'xc {xc.shape}')
+    # print(f'v0 {v0.shape}')
+    # print(f'v1 {v1.shape}')
+
     #Iteraions
     for j in range(maxiter):
         #Lanczos step iteration
-        alpha,beta2,v_next=lanczos(A,v1,v0,beta1)
+        alpha,beta2,v_next = lanczos(A,v1,v0,beta1)
         #update of vj and vj+1
-        v0=v1.copy()
-        v1=v_next
+        v0 = v1.copy()
+        v1 = v_next.copy()
         
         #Update of Martix V of Krylov space that we need to eliminate
-        V=np.hstack((V,v1.reshape((len(v1),1))))
+        V = np.hstack((V,v1.reshape((len(v1),1))))
 
         #Triagonal matrix T construction after Lanczos step
-        T=tridiag(T,beta1,alpha,beta2)
+        T = tridiag(T,beta1,alpha,beta2)
         
         #if betaj+1 == 0 breakdown
         if isclose(beta2,0.0):
             print(beta2)
-            exit=exitmsgs[2].format(j=j)
+            exit = exitmsgs[2].format(j=j)
             break
         #update bj=bj+1 for the next iteration
-        beta1=beta2
+        beta1 = beta2
 
 
         #QR factorization of T using givens rotations
-        G,R=QR_givens_rotation(T)
+        G,R = QR_givens_rotation(T)
         
         #G.T(beta_1 * e1)
-        tj=G[0,j]*b_norm
+        tj = G[0,j]*b_norm
         #Computation of the last 3  Pk vectors
         if j == 0 :
-            pk = v0 / R[j,j]
-        if j == 1 :
-            pk= np.divide(v0 - p0 * R[j-1,j],R[j,j])
+            pk = np.divide(v0,R[j,j])
+            # P = pk
 
-        if j>1 :
-            p01=p1 * R[j-1,j] + p0 * R[j-2,j]
-            diff=np.subtract(v0,p01)
+        if j == 1 :
+            pk = np.divide(np.subtract(v0 , np.dot(p1, R[j-1,j])),R[j,j])
+            # P = np.hstack((P,pk))
+
+        if j >= 2 :
+            p01 = p1 * R[j-1,j] + p0 * R[j-2,j]
+            diff = np.subtract(v0,p01)
             pk = np.divide(diff,R[j,j])
+            # print(f'pk {pk.shape}')
+            # P = np.hstack((P,pk))
 
         #update 3 vectors for the next stepo    
-        p0=p1
-        p1=pk
+        p0 = p1.copy()
+        p1 = pk.copy()
         #increment of the solution xc
-        xc = xc + np.dot(tj,pk.reshape(len(pk),1))
-        
+        xc = xc + np.dot(tj,pk)
+        # print('P V r rinv')
+        # print(P.shape)
+        # print(V.shape)
+        # print(R.shape)
+        # print(np.linalg.inv(R[:-1,:]).shape)
+        # if j>0:
+        #     O = P @ R[:-1,:]
         
         #Computation of the residual of the solution
         r2 = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,xc))
@@ -223,9 +242,9 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         
         #Computation of solution xk = Vk @ yk    
         x = np.dot(V[:,:-1],y)
-        x=x.reshape(len(x),1)
+        x = x.reshape(len(x),1)
         
-        x+=x0
+        x = x + x0
         #Computation of the residual
         r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
         r = np.linalg.norm(r)
@@ -235,10 +254,45 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         if r2 < tol:
             exit=exitmsgs[1].format(j=j)
             break
-    
+        
+        # print(f'r {r.shape}')
+        # print(f'r2 {r2.shape}')
+        # print(f'x {x.shape}')
+        # print(f'x0 {x0.shape}')
+        # print(f'v {v.shape}')
+        # print(f'v0 {v0.shape}')
+        # print(f'v1 {v1.shape}')
+        # print(f'v_next {v_next.shape}')
+        # print(f'y {y.shape}')
+        # print(f'p0 {p0.shape}')
+        # print(f'p1 {p1.shape}')
+        # print(f'pk {pk.shape}')
+        # print(f'V {V.shape}')
+        # print(f'T {T.shape}')
+        # print(f'r {r}')
+        # print(f'r2 {r2}')
+        # print(f'x {x}')
+        # # print(f'x0 {x0}')
+        # print(f'v {v}')
+        # print(f'v0 {v0}')
+        # print(f'v1 {v1}')
+        # print(f'v_next {v_next}')
+        # # print(f'y {y}')
+        # print(f'p0 {p0}')
+        # print(f'p1 {p1}')
+        # print(f'pk {pk}')
+        # print(f'V {V}')
+        # if j > 0:
+        #     print(f'O {O}')
+        # print(f'T {T}')
+        # print(f'G {G}')
+        # print(f'{b_norm}')
+        # print(f'R {R}')
+        # print('################################################################################################################################################')
+        # input('premi ####################################################################################')
     #check if exit because maxiteration reached
-    if j+1==maxiter:
-        exit=exitmsgs[3].format(j=j+1)
+    if j+1 == maxiter:
+        exit = exitmsgs[3].format(j=j+1)
         
     return j+1,x,xc,res,res2,exit
 
@@ -249,7 +303,7 @@ def eigenvalues(A):
 
 #print eigenvalut min and max given a matrix A
 def min_max_eigenvalue(A):
-    a=eigenvalues(A)
+    a = eigenvalues(A)
     return (a.min(),a.max())
     
     

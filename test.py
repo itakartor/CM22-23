@@ -17,12 +17,12 @@ listEMatrix = listEMatrix.buildIncidenceMatrix()
 # print("CG =================================================================")
 
 
-# conjugate = CG(listEMatrix)
-# conjugate.start_CG()
+conjugate = CG(listEMatrix)
+conjugate.start_CG()
 
-print("MINRES =================================================================")
-minres = MINRES(listEMatrix)
-minres.start_MINRES()
+# print("MINRES =================================================================")
+# minres = MINRES(listEMatrix)
+# minres.start_MINRES()
 
 # in this point we have to generate all incidences matrixes and
 # generate all the solutions of the systems

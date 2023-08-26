@@ -26,7 +26,13 @@ for inM in listEMatrix:
     print("Result A and b shapes")
     print("A:",A2.shape,"b",len(b2))
     print("MinRes  MaxIter",len(b2)*5)
-    j,x,xc,r,r2,exit= minres(A2,b2,maxiter=116)
+    # Ai = np.identity(5)
+    # bi = np.ones(5)
+    # for i in range(0,5):
+    #     Ai[i,i] = Ai[i,i] + np.random.rand()   
+    #     bi[i] = np.random.rand()   
+    # j,x,xc,r,r2,exit= minres(Ai,bi,maxiter=5)
+    j,x,xc,r,r2,exit= minres(A2,b2,maxiter=A2.shape[0])
     res=r
     res2=r2
     """j,x,xc,r,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
@@ -61,4 +67,4 @@ for inM in listEMatrix:
     ax2.set_ylabel('Residual')
     
     plt.show()
-    break
+    # break

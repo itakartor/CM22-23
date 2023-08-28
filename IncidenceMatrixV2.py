@@ -109,7 +109,7 @@ def __completeParser(r):
             # but it has to verify
             case "p":
                 __case_p(line,matrix)
-            case "a":
+            case "a": 
                 arcs.append(__case_a(line,matrix,cIndex))
                 '''arcs[f'{arc.source}-{arc.destination}'] = arc'''
                 cIndex+=1
@@ -151,7 +151,6 @@ def __extract_c_values(line,npar):
         return list(map(int, values))
     else:
         print(f"Errore: i valori {values} non possono essere estratti correttamente dalla stringa.")
-        return
 
     
 def __gridgraphParser(r):

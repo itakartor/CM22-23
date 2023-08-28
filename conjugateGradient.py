@@ -5,9 +5,9 @@ import numpy as np
 import configs
 from matplotlib import pyplot as plt
 
-from util import diagonalM, invSimpleDiag, listOfPointsXY, timeit
+from util import diagonalM, invSimpleDiag, timeit
 
-class istanceMCF_CG:
+class istance_cg:
     A:np.ndarray #E*D^-1*Et
     EMatrix:np.ndarray
     diagonalMatrix:np.ndarray
@@ -16,46 +16,43 @@ class istanceMCF_CG:
 
 # it's a list of the instances of the CG problems
 class ConjugateGradient:
-    listIstancesProblem:list[istanceMCF_CG] = []
-    listofListPoints:list[listOfPointsXY] = []
+    instanceProblem:istance_cg
     #initialize istance of the problems  with incidence matrixis 
 
     def __init__(self,eMatrices:list[IncidenceMatrix]):
-        self.listIstancesProblem = []
         # print(f"lunghezza {len(eMatrices)}")
         for i in range(len(eMatrices)):
             #print("I:",i)
-            istanceMCF = istanceMCF_CG()
-            istanceMCF.name=f"{eMatrices[i].generator.replace('./src/','')}-{i}"
-            c = self.buildArrayDeficit(eMatrices[i].nodes)
-            b = self.buildArrayCosts(eMatrices[i].arcs)
-            istanceMCF.EMatrix = eMatrices[i].m
-            numOfarcs:int = istanceMCF.EMatrix.shape[1]
+            self.instanceProblem = istance_cg()
+            self.instanceProblem.name=f"{eMatrices[i].generator.replace('./src/','')}-{i}"
+            c = self.build_array_deficit(eMatrices[i].nodes)
+            b = self.build_array_costs(eMatrices[i].arcs)
+            self.instanceProblem.EMatrix = eMatrices[i].m
+            numOfarcs:int = self.instanceProblem.EMatrix.shape[1]
             # this matrix is m*m that is arcs number  
             #print("this matrix is m*m that is arcs number")
-            istanceMCF.diagonalMatrix = diagonalM(numOfarcs)
+            self.instanceProblem.diagonalMatrix = diagonalM(numOfarcs)
             
             #E*D^-1
             #print("D^-1")
-            invDiag =invSimpleDiag(istanceMCF.diagonalMatrix)
+            invDiag =invSimpleDiag(self.instanceProblem.diagonalMatrix)
             #print("E*D^-1")
-            matrix_diagInv = istanceMCF.EMatrix @ invDiag
+            matrix_diagInv = self.instanceProblem.EMatrix @ invDiag
             #E*D^-1*Et
             #print("E*D^-1*Et") 
-            istanceMCF.A = matrix_diagInv @ istanceMCF.EMatrix.T
+            self.instanceProblem.A = matrix_diagInv @ self.instanceProblem.EMatrix.T
             #It's all values w
             #print("It's all values w") 
             #print(eMatrices[i].generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
-            istanceMCF.vectorOfb = (matrix_diagInv @ b ) - c
-            self.listIstancesProblem.append(istanceMCF)
+            self.instanceProblem.vectorOfb = (matrix_diagInv @ b ) - c
 
-    def buildArrayDeficit(self,listNodes:list) -> np.array:
+    def build_array_deficit(self,listNodes:list) -> np.array:
         c = np.array([])
         for node in listNodes:
             c = np.append(c,[[node.deficit]])
         return c
     
-    def buildArrayCosts(self,listArcs:dict) -> np.array:
+    def build_array_costs(self,listArcs:dict) -> np.array:
         b = np.array([])
         for arc in listArcs:
             b = np.append(b,[[arc.cost]])
@@ -67,19 +64,17 @@ class ConjugateGradient:
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     @timeit
-    def getListPointCG(self,A:np.ndarray, b:np.ndarray, x0:np.ndarray,tol:float,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") ->listOfPointsXY:
+    def get_list_point_cg(self,A:np.ndarray, b:np.ndarray, x0:np.ndarray,tol:float,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") ->list[float]:
         w = open(os.path.join(path_output,f"{solution_file}-{name}.txt"), "w")
         xGraph:list[int] = [] # number of iteration
         yGraph:list[int] = [] # difference between real b and artificial b
-        listPoints:listOfPointsXY = listOfPointsXY()
-        listPoints.listX = []
-        listPoints.listY = []
+        listPointsY:list[float] = []
         if(A.shape[1] != b.shape[0]):
             print('\n-------------------------------------')
             print("ERROR on dimension")
             print(f"dim A: {A.shape}, dim b: {b.shape}")
             print('-------------------------------------\n')
-            return listPoints
+            return listPointsY
         r:np.ndarray
         if(x0 == None):
             x = np.zeros((A.shape[0],1))
@@ -109,8 +104,7 @@ class ConjugateGradient:
                 break
             beta = r.T @ r / numAlpha # this uses new r
             d = r + beta * d
-        listPoints.listX.extend(xGraph)
-        listPoints.listY.extend(yGraph)
+        listPointsY.extend(yGraph)
         w.write("A*x = b\n")
         w.write(f"Shape of A:{A.shape}\n A:\n{A}\n")
         w.write(f"Shape of x:{x.shape}\n CG x:\n{x}\n")
@@ -121,43 +115,29 @@ class ConjugateGradient:
         print(f"last iteration: {last_iteration}, residual: {retTol[0][0]}")
 
         # return listPoints
-        return yGraph
+        return listPointsY
 
     #compute the conjugate algorithm for all the problem instances
     @timeit
-    def start_CG(self,draw_graph=configs.ACTIVE_DRAW_GRAPH, inNumIteration:int=0,inTol:float = 1e-5):
-        i:int =1
-        for instance in self.listIstancesProblem:
-            print(f"rank matrix: {instance.A.shape[0]}")
-            if(inNumIteration != 0):
-                points:listOfPointsXY = self.getListPointCG(
-                        A=instance.A,
-                        b=np.transpose(instance.vectorOfb),
-                        x0=np.zeros((instance.A.shape[0],1)),
-                        tol=inTol,
-                        numIteration=inNumIteration, # rank of the matrix
-                        name=instance.name
-                    )
-            else:
-                points:listOfPointsXY = self.getListPointCG(
-                    A=instance.A,
-                    b=np.transpose(instance.vectorOfb),
+    def start_cg(self, inNumIteration:int=0,inTol:float = 1e-5):
+        print(f"rank matrix: {self.instanceProblem.A.shape[0]}")
+        points:list[float] = []
+        if(inNumIteration != 0):
+            points = self.get_list_point_cg(
+                    A=self.instanceProblem.A,
+                    b=np.transpose(self.instanceProblem.vectorOfb),
+                    x0=np.zeros((self.instanceProblem.A.shape[0],1)),
+                    tol=inTol,
+                    numIteration=inNumIteration, # rank of the matrix
+                    name=self.instanceProblem.name
+                )
+        else:
+            points = self.get_list_point_cg(
+                    A=self.instanceProblem.A,
+                    b=np.transpose(self.instanceProblem.vectorOfb),
                     x0=None,
                     tol=inTol,
-                    numIteration=instance.A.shape[0], # rank of the matrix
-                    name=instance.name
+                    numIteration=self.instanceProblem.A.shape[0], # rank of the matrix
+                    name=self.instanceProblem.name
                 )
-            if draw_graph:
-                plt.subplot(3,1,i)
-                plt.plot(points.listX,points.listY, label = f'iteration{i}')
-                i += 1
-            self.listofListPoints.extend(points) 
-
-        if draw_graph:
-            plt.xlabel('X-axis')
-            plt.ylabel('Y-axis')
-            plt.title("A simple line graph")
-            # show a legend on the plot
-            plt.legend()
-            plt.show()
-        return self.listofListPoints
+        return points

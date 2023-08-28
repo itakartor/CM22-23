@@ -33,7 +33,7 @@ def QR_Householder(A,slower=False):
     Q = np.eye(m)
     R= A.copy()
     for j in (range(n)):
-        u,s=householder_vector(R[j:,j])
+        u,_=householder_vector(R[j:,j])
         u.resize((len(u),1))
         H = np.eye(len(u)) - np.dot((2*u),u.T)
         if not slower:
@@ -115,7 +115,7 @@ def lanczos(A,v1,v0,beta1,func=__prodMV):
     return alpha,beta2,v_next
     
     
-def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
+def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-2, maxiter = None):
     #initialize variable
     
     n = len(b)
@@ -128,7 +128,7 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         "Lucky Breakdown solution of Ax=b with Beta_j=0 was found at iteration {j}",
         "Exit because max iteration reached iteration:{j}"
     ]
-    exit = exitmsgs[1]
+    exitRes = exitmsgs[1]
     
     #Check A density
     spar_ratio =__sparsity_ratio(A)
@@ -143,10 +143,9 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         return exitmsgs[0]
     
     #Check start point
-    if len(x0) == 0:
+    if x0 == None:
         w:np.ndarray = b.copy()
         w = w.reshape((len(b),1))
-        x0:np.ndarray = np.zeros((len(b),1))
         #xc solution
         xc:np.ndarray = np.zeros((len(b),1))
     else:
@@ -175,6 +174,7 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
 
     #Iteraions
     for j in range(maxiter):
+        print(f'iteration: {j}, maxIteration: {maxiter}')
         #Lanczos step iteration
         alpha,beta2,v_next = lanczos(A,v1,v0,beta1)
         #update of vj and vj+1
@@ -190,7 +190,7 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         #if betaj+1 == 0 breakdown
         if isclose(beta2,0.0):
             print(beta2)
-            exit = exitmsgs[2].format(j=j)
+            exitRes = exitmsgs[2].format(j=j)
             break
         #update bj=bj+1 for the next iteration
         beta1 = beta2
@@ -252,7 +252,7 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         # res.append(r)
         #check if r is under the tollerance
         if r2 < tol*tol:
-            exit=exitmsgs[1].format(j=j)
+            exitRes = exitmsgs[1].format(j=j)
             break
         
         # print(f'r {r.shape}')
@@ -292,10 +292,10 @@ def minres(A, b , x0=[], tol=1e-5, maxiter=None, func=__prodMV):
         # input('premi ####################################################################################')
     #check if exit because maxiteration reached
     if j+1 == maxiter:
-        exit = exitmsgs[3].format(j=j+1)
+        exitRes = exitmsgs[3].format(j=j+1)
         
     # return j+1,x,xc,res,res2,exit
-    return j+1,xc,res2,exit
+    return j+1,xc,res2,exitRes
 
 
 #use lib to find eigenvalues of matix H
@@ -313,8 +313,8 @@ def print_first_N(a,N):
     try: acopy = a.copy()
     except: acopy = a[:]
     acopy.sort()
-    max = min(N,len(a))
-    for i in range(max):
+    max_value = min(N,len(a))
+    for i in range(max_value):
         print('%1.5g\t' % acopy[i])
     print('')
 

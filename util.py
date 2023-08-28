@@ -6,10 +6,6 @@ import numpy as np
 # import networkx as nx
 import matplotlib.pyplot as plt
 
-class listOfPointsXY:
-    listX:list[int]
-    listY:list[int]
-
 def timeit(func):
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):

@@ -1,8 +1,8 @@
 import numpy as np
 import IncidenceMatrixV2 
 import util 
-from scipy.sparse.linalg import minres
-from MINRESV3 import  minres
+# from scipy.sparse.linalg import minresB
+from MINRESV3 import  custom_minres
 from conjugateGradient import ConjugateGradient as CG
 
 import matplotlib.pyplot as plt
@@ -35,10 +35,10 @@ for inM in listEMatrix:
     # j,x,xc,r,r2,exit= minres(Ai,bi,maxiter=5)
     # j,x,xc,r,r2,exit= minres(A2,b2,maxiter=A2.shape[0])
     
-    j,xc,r2,exit= minres(A2,b2,maxiter=A2.shape[0])
+    j,xc,r2,exit= custom_minres(A2,b2,maxiter=A2.shape[0])
     
     conjugate = CG([inM])
-    res = conjugate.start_CG()
+    res = conjugate.start_cg()
     
     # res=r
     """j,x,xc,r,r2,exit= minres(A2,b2,x0=xc,maxiter=30)

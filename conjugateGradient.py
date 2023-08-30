@@ -19,32 +19,31 @@ class ConjugateGradient:
     instanceProblem:istance_cg
     #initialize istance of the problems  with incidence matrixis 
 
-    def __init__(self,eMatrices:list[IncidenceMatrix]):
+    def __init__(self,eMatrix:IncidenceMatrix):
         # print(f"lunghezza {len(eMatrices)}")
-        for i in range(len(eMatrices)):
-            #print("I:",i)
-            self.instanceProblem = istance_cg()
-            self.instanceProblem.name=f"{eMatrices[i].generator.replace('./src/','')}-{i}"
-            c = self.build_array_deficit(eMatrices[i].nodes)
-            b = self.build_array_costs(eMatrices[i].arcs)
-            self.instanceProblem.EMatrix = eMatrices[i].m
-            numOfarcs:int = self.instanceProblem.EMatrix.shape[1]
-            # this matrix is m*m that is arcs number  
-            #print("this matrix is m*m that is arcs number")
-            self.instanceProblem.diagonalMatrix = diagonalM(numOfarcs)
-            
-            #E*D^-1
-            #print("D^-1")
-            invDiag =invSimpleDiag(self.instanceProblem.diagonalMatrix)
-            #print("E*D^-1")
-            matrix_diagInv = self.instanceProblem.EMatrix @ invDiag
-            #E*D^-1*Et
-            #print("E*D^-1*Et") 
-            self.instanceProblem.A = matrix_diagInv @ self.instanceProblem.EMatrix.T
-            #It's all values w
-            #print("It's all values w") 
-            #print(eMatrices[i].generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
-            self.instanceProblem.vectorOfb = (matrix_diagInv @ b ) - c
+        #print("I:",i)
+        self.instanceProblem = istance_cg()
+        self.instanceProblem.name=f"{eMatrix.generator.replace('./src/','')}"
+        c = self.build_array_deficit(eMatrix.nodes)
+        b = self.build_array_costs(eMatrix.arcs)
+        self.instanceProblem.EMatrix = eMatrix.m
+        numOfarcs:int = self.instanceProblem.EMatrix.shape[1]
+        # this matrix is m*m that is arcs number  
+        #print("this matrix is m*m that is arcs number")
+        self.instanceProblem.diagonalMatrix = diagonalM(numOfarcs)
+        
+        #E*D^-1
+        #print("D^-1")
+        invDiag = invSimpleDiag(self.instanceProblem.diagonalMatrix)
+        #print("E*D^-1")
+        matrix_diagInv = self.instanceProblem.EMatrix @ invDiag
+        #E*D^-1*Et
+        #print("E*D^-1*Et") 
+        self.instanceProblem.A = matrix_diagInv @ self.instanceProblem.EMatrix.T
+        #It's all values w
+        #print("It's all values w") 
+        #print(eMatrix.generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
+        self.instanceProblem.vectorOfb = (matrix_diagInv @ b ) - c
 
     def build_array_deficit(self,listNodes:list) -> np.array:
         c = np.array([])

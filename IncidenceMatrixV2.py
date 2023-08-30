@@ -79,7 +79,7 @@ def __fill_nodes(nRow, nodes):
             nodes.append(Node(i=indexn))
     return nodes
     
-def __completeParser(r):
+def __completeParser(r) -> IncidenceMatrix:
     nodes=[]
     arcs=[]
     print("Parsing complete graph start...")
@@ -153,7 +153,7 @@ def __extract_c_values(line,npar):
         print(f"Errore: i valori {values} non possono essere estratti correttamente dalla stringa.")
 
     
-def __gridgraphParser(r):
+def __gridgraphParser(r) -> IncidenceMatrix:
     arcs=[]
     nodes=[]
     print("Parsing GRID GRAPH start...")
@@ -186,7 +186,7 @@ def __gridgraphParser(r):
 
 
 
-def __rmfParser(r):
+def __rmfParser(r) -> IncidenceMatrix:
     arcs=[]
     nodes=[]
     print("Parsing RMF graph start...")
@@ -220,8 +220,8 @@ def __rmfParser(r):
 def buildIncidenceMatrix(
         path_test=configs.PATH_DMX,path_output=configs.PATH_DIRECTORY_OUTPUT,
         matrix_file=configs.NAME_FILE_MATRIX_INCIDENCE
-    ) ->list:
-    retArrMatrix:list = []
+    ) ->list[IncidenceMatrix]:
+    retArrMatrix:list[IncidenceMatrix] = []
     print(f"numFile: {len(os.listdir(path_test))}") 
     parser:dict={'com': __completeParser , "ggr": __gridgraphParser, "rmf": __rmfParser}
     i:int = 0
@@ -229,7 +229,7 @@ def buildIncidenceMatrix(
         util.creationDir(path_output)
         w = open(os.path.join(path_output,f"{matrix_file}{i}.txt"), "w")
         r = open(os.path.join(path_test, path), "r")
-        matrix=parser[path[0:3]](r)
+        matrix = parser[path[0:3]](r)
         retArrMatrix.append(matrix)
         w.write(str(matrix))
         w.close()

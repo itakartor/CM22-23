@@ -12,10 +12,32 @@ import matplotlib.pyplot as plt
 #https://www.dmsa.unipd.it/~berga/Teaching/Phd/minres.pdf
 
 #Build the Incidence Matrix of the graphs generated |complete graph ,grid graph,rmf graph|
-listEMatrix = IncidenceMatrixV2.buildIncidenceMatrix()
+listEMatrix:list[IncidenceMatrixV2.IncidenceMatrix] = IncidenceMatrixV2.buildIncidenceMatrix()
 
 #for each Incdence matrix we build the Matrix A and the vector B from |D   E|=|c|
 #                                                                     |E^t 0| |b|
+n_chart:int = len(listEMatrix)
+v:int = 1
+colors_list:list[str] = ['green','red','blue']
+
+fig,ax = plt.subplots(n_chart, 1)
+fig.suptitle('Conjugate Gradient')
+for inM in listEMatrix:
+    conjugate = CG(inM)
+    res = conjugate.start_cg()
+    
+    
+    ax = plt.subplot(n_chart,1,v)
+    ax.set_ylabel('Residual')
+    ax.set_xlabel("Iteration")
+    ax.semilogy(res,linestyle="dotted",color = colors_list[v - 1])
+    
+    ax.axline((conjugate.instanceProblem.A.shape[0], .0), (conjugate.instanceProblem.A.shape[0], .1), color='C3')
+    v = v+1
+plt.show()
+v = 1
+fig,ax = plt.subplots(n_chart, 1)
+fig.suptitle('Minres')
 for inM in listEMatrix:
     E:np.ndarray = inM.m
     D:np.ndarray = util.diagonalM(E.shape[1])
@@ -35,42 +57,15 @@ for inM in listEMatrix:
     # j,x,xc,r,r2,exit= minres(Ai,bi,maxiter=5)
     # j,x,xc,r,r2,exit= minres(A2,b2,maxiter=A2.shape[0])
     
-    j,xc,r2,exit= custom_minres(A2,b2,maxiter=A2.shape[0])
+    j,xc,res2,exit = custom_minres(A2,b2,maxiter=A2.shape[0])
     
-    conjugate = CG([inM])
-    res = conjugate.start_cg()
-    
-    # res=r
-    """j,x,xc,r,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
-    res2+=r2
-    j,x,xc,r,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
-    res2+=r2
-    j,x,xc,rs,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
-    res2+=r2
-    j,x,xc,rs,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
-    res2+=r2
-    j,x,xc,rs,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
-    res2+=r2
-    j,x,xc,rs,r2,exit= minres(A2,b2,x0=xc,maxiter=30)
-    res2+=r2"""
 
+    ax = plt.subplot(n_chart,1,v)
+    ax.set_ylabel('Residual')
+    ax.set_xlabel("Iteration")
+    ax.semilogy(res2,linestyle="dotted",color = colors_list[v - 1])
+    
+    ax.axline((A2.shape[0], .0), (A2.shape[0], .1), color='C3')
+    v = v+1
 
-
-    #k,res3=minresSlide(A2,b2,115)
-    # print("it:",j,"exit Minres:",exit)
-    #print("res libreria",minres(A2,b2,show=True))
-    #Plot of the residual
-    
-    fig,(ax1, ax2) = plt.subplots(2, 1)
-    fig.suptitle('Conjugate Gradient & MinRes')
-    
-    ax1.semilogy(res,linestyle="dotted",color="green")
-    ax1.set_ylabel('Residual')
-    ax1.set_xlabel("Iteration")
-    
-    ax2.semilogy(r2,linestyle="solid",color="red")
-    ax2.set_xlabel('Iteration')
-    ax2.set_ylabel('Residual')
-    
-    plt.show()
-    # break
+plt.show()

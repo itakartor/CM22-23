@@ -115,7 +115,7 @@ def lanczos(A,v1,v0,beta1,func=__prodMV):
     return alpha,beta2,v_next
     
     
-def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-2, maxiter = None):
+def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-4, maxiter = None):
     #initialize variable
     
     n = len(b)
@@ -160,7 +160,7 @@ def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-2, maxiter = None):
     # V = v1.copy()
     p1 = p0 = pk = np.zeros((len(v1),1)) #Vector of the matrix P_k= V_kR^-1 -> P_kR = V_k where R is a triagonal matrix of T_k QR factorization
     
-    res2:list[float] = [] # residual of second solution
+    yPoints:list[float] = [] # residual of second solution
     # res:list[float] = [] #residual of firse solution
     T = np.zeros((0, 0)) #Initialize Empty Tridiagonal Matrix
     
@@ -174,7 +174,7 @@ def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-2, maxiter = None):
 
     #Iteraions
     for j in range(maxiter):
-        print(f'iteration: {j}, maxIteration: {maxiter}')
+        # print(f'iteration: {j}, maxIteration: {maxiter}')
         #Lanczos step iteration
         alpha,beta2,v_next = lanczos(A,v1,v0,beta1)
         #update of vj and vj+1
@@ -231,9 +231,9 @@ def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-2, maxiter = None):
         #     O = P @ R[:-1,:]
         
         #Computation of the residual of the solution
-        r2 = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,xc))
-        r2 = np.linalg.norm(r2)
-        res2.append(r2)
+        res = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,xc))
+        res = np.linalg.norm(res)
+        yPoints.append(res)
         
         #vector (Beta_1 e1) for the iteration j
         # v = np.eye(j+2,1) * b_norm 
@@ -251,12 +251,12 @@ def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-2, maxiter = None):
         
         # res.append(r)
         #check if r is under the tollerance
-        if r2 < tol*tol:
+        if res < tol*tol:
             exitRes = exitmsgs[1].format(j=j)
             break
         
         # print(f'r {r.shape}')
-        # print(f'r2 {r2.shape}')
+        # print(f'res {res.shape}')
         # print(f'x {x.shape}')
         # print(f'x0 {x0.shape}')
         # print(f'v {v.shape}')
@@ -270,7 +270,7 @@ def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-2, maxiter = None):
         # print(f'V {V.shape}')
         # print(f'T {T.shape}')
         # print(f'r {r}')
-        # print(f'r2 {r2}')
+        # print(f'res {res}')
         # print(f'x {x}')
         # # print(f'x0 {x0}')
         # print(f'v {v}')
@@ -294,8 +294,8 @@ def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-2, maxiter = None):
     if j+1 == maxiter:
         exitRes = exitmsgs[3].format(j=j+1)
         
-    # return j+1,x,xc,res,res2,exit
-    return j+1,xc,res2,exitRes
+    # return j+1,x,xc,res,yPoints,exit
+    return j+1,xc,yPoints,exitRes
 
 
 #use lib to find eigenvalues of matix H

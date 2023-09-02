@@ -197,7 +197,7 @@ def __rmfParser(r) -> IncidenceMatrix:
         match line[0]:
             case "c":
                 values=__extract_c_values(line,7)
-                if (values!= None):
+                if (values != None):
                     print(f"Parametri C {values}")
                     matrix.minCapacity= values[2]
                     matrix.maxCapacity= values[3]

@@ -19,15 +19,17 @@ listEMatrix:list[IncidenceMatrixV2.IncidenceMatrix] = IncidenceMatrixV2.buildInc
 n_chart:int = len(listEMatrix)
 v:int = 1
 colors_list:list[str] = ['green','red','blue']
+titles_list:list[str] = ['Complete','Grid','RMF']
 
-fig,ax = plt.subplots(n_chart, 1)
-fig.suptitle('Conjugate Gradient')
+fig,ax = plt.subplots(n_chart, 1, constrained_layout = True)
+fig.suptitle('Conjugate Gradient',x = 0.55)
 for inM in listEMatrix:
     conjugate = CG(inM)
     res = conjugate.start_cg()
     
     
     ax = plt.subplot(n_chart,1,v)
+    ax.set_title(titles_list[v - 1])
     ax.set_ylabel('Residual')
     ax.set_xlabel("Iteration")
     ax.semilogy(res,linestyle="dotted",color = colors_list[v - 1])
@@ -36,8 +38,8 @@ for inM in listEMatrix:
     v = v+1
 plt.show()
 v = 1
-fig,ax = plt.subplots(n_chart, 1)
-fig.suptitle('Minres')
+fig,ax = plt.subplots(n_chart, 1, constrained_layout = True)
+fig.suptitle('Minres',x = 0.55)
 for inM in listEMatrix:
     E:np.ndarray = inM.m
     D:np.ndarray = util.diagonalM(E.shape[1])
@@ -61,6 +63,7 @@ for inM in listEMatrix:
     
 
     ax = plt.subplot(n_chart,1,v)
+    ax.set_title(titles_list[v - 1])
     ax.set_ylabel('Residual')
     ax.set_xlabel("Iteration")
     ax.semilogy(res2,linestyle="dotted",color = colors_list[v - 1])

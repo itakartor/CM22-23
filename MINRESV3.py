@@ -1,5 +1,5 @@
 import numpy as np
-import time
+from util import timeit
 from math import isclose, hypot
 def __sparsity_ratio(X):
     return 1.0 - np.count_nonzero(X) / float(X.shape[0] * X.shape[1])
@@ -114,11 +114,11 @@ def lanczos(A,v1,v0,beta1,func=__prodMV):
     
     return alpha,beta2,v_next
     
-    
-def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-4, maxiter = None):
+@timeit    
+def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float = 1e-5, maxiter:int = None):
     #initialize variable
     
-    n = len(b)
+    n:int = len(b)
     if maxiter == None:
         maxiter = n * 5
     
@@ -189,7 +189,7 @@ def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-4, maxiter = None):
         
         #if betaj+1 == 0 breakdown
         if isclose(beta2,0.0):
-            print(beta2)
+            # print(beta2)
             exitRes = exitmsgs[2].format(j=j)
             break
         #update bj=bj+1 for the next iteration
@@ -295,6 +295,7 @@ def custom_minres(A, b , x0:np.ndarray = None, tol = 1e-4, maxiter = None):
         exitRes = exitmsgs[3].format(j=j+1)
         
     # return j+1,x,xc,res,yPoints,exit
+    print(f"[MINRES] last iteration: {j}, residual: {yPoints[-1]}")
     return j+1,xc,yPoints,exitRes
 
 

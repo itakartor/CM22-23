@@ -1,4 +1,4 @@
-from incidenceMatrix import IncidenceMatrix
+from IncidenceMatrixV2 import IncidenceMatrix
 
 import os
 import numpy as np
@@ -62,7 +62,6 @@ class ConjugateGradient:
     # b is a vector of system Ax = b
     # x0 is the starting point
     # n is the number of iterations of the algorithm
-    @timeit
     def get_list_point_cg(self,A:np.ndarray, b:np.ndarray, x0:np.ndarray,tol:float,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") ->list[float]:
         w = open(os.path.join(path_output,f"{solution_file}-{name}.txt"), "w")
         xGraph:list[int] = [] # number of iteration
@@ -111,10 +110,10 @@ class ConjugateGradient:
         w.write(f"last iteration: {last_iteration}, residual: {retTol[0][0]}")
         
         w.close()
-        print(f"last iteration: {last_iteration}, residual: {retTol[0][0]}")
+        print(f"[CG] last iteration: {last_iteration}, residual: {retTol[0][0]}")
 
         # return listPoints
-        return listPointsY
+        return listPointsY,last_iteration
 
     #compute the conjugate algorithm for all the problem instances
     @timeit
@@ -122,7 +121,7 @@ class ConjugateGradient:
         print(f"rank matrix: {self.instanceProblem.A.shape[0]}")
         points:list[float] = []
         if(inNumIteration != 0):
-            points = self.get_list_point_cg(
+            points,last_iteration = self.get_list_point_cg(
                     A=self.instanceProblem.A,
                     b=np.transpose(self.instanceProblem.vectorOfb),
                     x0=np.zeros((self.instanceProblem.A.shape[0],1)),
@@ -131,7 +130,7 @@ class ConjugateGradient:
                     name=self.instanceProblem.name
                 )
         else:
-            points = self.get_list_point_cg(
+            points,last_iteration = self.get_list_point_cg(
                     A=self.instanceProblem.A,
                     b=np.transpose(self.instanceProblem.vectorOfb),
                     x0=None,
@@ -139,4 +138,4 @@ class ConjugateGradient:
                     numIteration=self.instanceProblem.A.shape[0], # rank of the matrix
                     name=self.instanceProblem.name
                 )
-        return points
+        return points,last_iteration

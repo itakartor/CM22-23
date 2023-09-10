@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from util import timeit
 from math import isclose, hypot
@@ -117,7 +118,8 @@ def lanczos(A,v1,v0,beta1,func=__prodMV):
 @timeit    
 def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float = 1e-5, maxiter:int = None):
     #initialize variable
-    
+    start = time.time_ns()
+    listTimeY:list[float] = []
     n:int = len(b)
     if maxiter == None:
         maxiter = n * 5
@@ -235,6 +237,8 @@ def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float =
         res = np.linalg.norm(res)
         yPoints.append(res)
         
+        stop = time.time_ns()
+        listTimeY.append((stop-start)/1e+6)
         #vector (Beta_1 e1) for the iteration j
         # v = np.eye(j+2,1) * b_norm 
         # #Working solution using V_k in memory for discover y_k = T_k-b1e1
@@ -295,8 +299,8 @@ def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float =
         exitRes = exitmsgs[3].format(j=j+1)
         
     # return j+1,x,xc,res,yPoints,exit
-    print(f"[MINRES] last iteration: {j}, residual: {yPoints[-1]}")
-    return j+1,xc,yPoints,exitRes
+    print(f"[MINRES] last iteration: {j}, residual: {yPoints[-1]}, time: {listTimeY[-1]}ms")
+    return j+1,xc,yPoints,exitRes,listTimeY
 
 
 #use lib to find eigenvalues of matix H

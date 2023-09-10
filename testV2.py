@@ -25,7 +25,7 @@ titles_list:list[str] = ['Complete','Grid','RMF']
 fig,ax = plt.subplots(2, 1, constrained_layout = True)
 for inM in listEMatrix:
     conjugate = CG(inM)
-    res,last_iteration = conjugate.start_cg(inTol = 1e-4)
+    res,last_iteration,listTimeY = conjugate.start_cg(inTol = 1e-4)
     
     E:np.ndarray = inM.m
     D:np.ndarray = util.diagonalM(E.shape[1])
@@ -38,7 +38,7 @@ for inM in listEMatrix:
     # print("A:",A2.shape,"b",len(b2))
     # print("MinRes  MaxIter",len(b2)*5)
     
-    j,xc,res2,exit = custom_minres(A2,b2,maxiter=A2.shape[0],tol = 1e-4)
+    j,xc,res2,exit,listTimeY2 = custom_minres(A2,b2,maxiter=A2.shape[0],tol = 1e-4)
 
     ax = plt.subplot(2,1,1)
     ax.grid(True)
@@ -59,6 +59,28 @@ for inM in listEMatrix:
     ax.axline((A2.shape[0] - 1, .0), (A2.shape[0] - 1, .1), color='C3')
     ax.semilogy(res2,linestyle="solid",color = 'blue')
     ax.annotate(f"({j},{'{:.2e}'.format(res2[-1])})", (j,res2[-1]),xytext =(j - j/3,res2[-1] + 5), arrowprops = dict(facecolor ='green',shrink = 0.05))
+    
+    plt.suptitle(titles_list[v - 1],x = 0.55)
+    plt.show()
+    plt.subplots_adjust(hspace=0.5)
+
+    ax = plt.subplot(2,1,1)
+    ax.grid(True)
+    ax.set_title('Conjugate Gradient')
+    ax.set_ylabel('Time (ms)')
+    ax.set_xlabel("Iteration")
+    # ax.set_yticks(np.arange(listTimeY[0], listTimeY[-1], 5))
+    ax.semilogy(listTimeY,linestyle="solid",color = 'red')
+    ax.annotate(f"({last_iteration},{'{:.2f}'.format(listTimeY[-1])})", (last_iteration,listTimeY[-1]),xytext =(last_iteration - last_iteration/3,listTimeY[-1] - 100), arrowprops = dict(facecolor ='green',shrink = 0.05))
+    
+    ax = plt.subplot(2,1,2)
+    ax.grid(True)
+    ax.set_title('MINRES')
+    ax.set_ylabel('Time (ms)')
+    ax.set_xlabel("Iteration")
+    # ax.set_yticks(np.arange(listTimeY2[0], listTimeY2[-1], 5))
+    ax.semilogy(listTimeY2,linestyle="solid",color = 'blue')
+    ax.annotate(f"({j},{'{:.2f}'.format(listTimeY2[-1])})", (j,listTimeY2[-1]),xytext =(j - j/3,listTimeY2[-1] - 100), arrowprops = dict(facecolor ='green',shrink = 0.05))
     
     plt.suptitle(titles_list[v - 1],x = 0.55)
     v = v+1

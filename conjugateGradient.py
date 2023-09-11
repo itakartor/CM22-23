@@ -12,7 +12,7 @@ class istance_cg:
     A:np.ndarray #E*D^-1*Et
     EMatrix:np.ndarray
     diagonalMatrix:np.ndarray
-    vectorOfB:np.ndarray
+    b:np.ndarray
     name:str
 
 # it's a list of the instances of the CG problems
@@ -44,15 +44,8 @@ class ConjugateGradient:
         #It's all values w
         #print("It's all values w") 
         #print(eMatrix.generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
-        self.instanceProblem.vectorOfb = (matrix_diagInv @ b ) - c
-        
-    def get_Ab(self):
-        return self.instanceProblem.A,self.instanceProblem.vectorOfb
-    
-    def set_Ab(self,A,b):
-        self.instanceProblem.A=A
-        self.instanceProblem.vectorOfb=b
-        
+        self.instanceProblem.b = (matrix_diagInv @ b ) - c
+
     def build_array_deficit(self,listNodes:list) -> np.array:
         c = np.array([])
         for node in listNodes:
@@ -131,7 +124,7 @@ class ConjugateGradient:
         if(inNumIteration != 0):
             points,last_iteration,listTimeY = self.get_list_point_cg(
                     A=self.instanceProblem.A,
-                    b=np.transpose(self.instanceProblem.vectorOfb),
+                    b=np.transpose(self.instanceProblem.b),
                     x0=np.zeros((self.instanceProblem.A.shape[0],1)),
                     tol=inTol,
                     numIteration=inNumIteration, # rank of the matrix
@@ -140,7 +133,7 @@ class ConjugateGradient:
         else:
             points,last_iteration,listTimeY = self.get_list_point_cg(
                     A=self.instanceProblem.A,
-                    b=np.transpose(self.instanceProblem.vectorOfb),
+                    b=np.transpose(self.instanceProblem.b),
                     x0=None,
                     tol=inTol,
                     numIteration=self.instanceProblem.A.shape[0], # rank of the matrix

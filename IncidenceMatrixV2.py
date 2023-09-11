@@ -25,8 +25,8 @@ class Node():
 class IncidenceMatrix():
     m:np.ndarray = np.ndarray([], dtype='double')
     #arcs:dict = {} #the key is the source-destination and the value is the Arc object 
-    arcs:list=[]
-    nodes:list = []
+    arcs:list[Arc]=[]
+    nodes:list[Node] = []
     nRow:int
     nCo:int
     archParallel:int
@@ -57,8 +57,8 @@ class IncidenceMatrix():
     # - A dictionary of arcs
     def __init__(self):
         self.m:np.ndarray = np.ndarray(None, dtype='double')
-        self.arcs:list = []  
-        self.nodes:list = []
+        self.arcs:list[Arc] = []  
+        self.nodes:list[Node] = []
         self.nRow:int = -1
         self.nCol:int = -1
         self.archParallel:int = -1

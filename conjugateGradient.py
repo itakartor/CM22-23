@@ -45,7 +45,14 @@ class ConjugateGradient:
         #print("It's all values w") 
         #print(eMatrix.generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
         self.instanceProblem.vectorOfb = (matrix_diagInv @ b ) - c
-
+        
+    def get_Ab(self):
+        return self.instanceProblem.A,self.instanceProblem.vectorOfb
+    
+    def set_Ab(self,A,b):
+        self.instanceProblem.A=A
+        self.instanceProblem.vectorOfb=b
+        
     def build_array_deficit(self,listNodes:list) -> np.array:
         c = np.array([])
         for node in listNodes:

@@ -24,21 +24,40 @@ titles_list:list[str] = ['Complete','Grid','RMF']
 
 fig,ax = plt.subplots(2, 1, constrained_layout = True)
 for inM in listEMatrix:
+    print("Start solve: ",inM.generator)
+    A,b= util.instanceofMCF(D,E,b,c)
+
     conjugate = CG(inM)
-    res,last_iteration,listTimeY = conjugate.start_cg(inTol = 1e-4)
     
+    redA,redb=conjugate.get_Ab()
+    res,last_iteration,listTimeY = conjugate.start_cg(inTol = 1e-4)
+        
+
     E:np.ndarray = inM.m
     D:np.ndarray = util.diagonalM(E.shape[1])
     c:np.ndarray = [n.deficit for  n in inM.nodes]
     b:np.ndarray = [c.cost for c in inM.arcs]
     # print("Shapes:")
     # print("D shape:", D.shape, "E shape:", E.shape,"B len: ",len(b),"C len: ",len(c))
-    A2,b2= util.instanceofMCF(D,E,b,c)
+    
     # print("Result A and b shapes")
     # print("A:",A2.shape,"b",len(b2))
     # print("MinRes  MaxIter",len(b2)*5)
+   
+    """
+    Conjugate Sistema non ridotto 
+    """
+    """
+    conjugate.set_Ab(A,b)
+    res,last_iteration,listTimeY = conjugate.start_cg(inTol = 1e-4)
+    """
     
-    j,xc,res2,exit,listTimeY2 = custom_minres(A2,b2,maxiter=A2.shape[0],tol = 1e-4)
+    """
+    MINRES Sistema non ridotto"""
+    """
+    j,xc,res2,exit,listTimeY2 = custom_minres(A,b,maxiter=A.shape[0],tol = 1e-4)
+    """
+    j,xc,res2,exit,listTimeY2 = custom_minres(redA,redA,maxiter=A.shape[0],tol = 1e-4)
 
     ax = plt.subplot(2,1,1)
     ax.grid(True)

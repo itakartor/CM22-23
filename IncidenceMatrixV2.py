@@ -92,19 +92,25 @@ def __completeParser(r) -> IncidenceMatrix:
                     pieces = line.split(" ")
                     matrix.generator = f"{pieces[len(pieces) - 2]}"
                 elif(" parallel " in line):
-                    matrix.archParallel = int(line[len(line)-2])
+                    values=__extract_c_values(line,1)
+                    matrix.archParallel = values[0]
                 elif(" cost " in line):
-                    matrix.maxCost = int(line[len(line) - 4])
-                    matrix.minCost = int(line[len(line) - 2])
+                    values=__extract_c_values(line,2)
+                    matrix.maxCost = values[0]
+                    matrix.minCost = values[1]
                 elif(" capacity " in line):
-                    matrix.maxCapacity = int(line[len(line) - 4])
-                    matrix.minCapacity = int(line[len(line) - 2])
+                    values=__extract_c_values(line,2)
+                    matrix.maxCapacity = values[0]
+                    matrix.minCapacity = values[1]
                 elif("average deficit " in line):
-                    matrix.avgDeficit = int(line[len(line)-2])
+                    values=__extract_c_values(line,1)
+                    matrix.avgDeficit = values[0]
                 elif("total deficit " in line):
-                    matrix.totDeficit = int(line[len(line)-2])
+                    values=__extract_c_values(line,1)
+                    matrix.totDeficit = values[0]
                 elif(" seed " in line):
-                    matrix.seed = int(line[len(line)-2])        
+                    values=__extract_c_values(line,1)
+                    matrix.seed = values[0]        
             # in line with p there is number of nodes and arcs
             # but it has to verify
             case "p":

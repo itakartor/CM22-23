@@ -96,14 +96,13 @@ class ConjugateGradient:
             
             r = r - alpha *Ad
             retTol = r.T @ r
-            listPointsY.append(retTol[0][0])
-            if(retTol < tol*tol):
+            listPointsY.append(np.linalg.norm(retTol[0][0])/np.linalg.norm(x))
+            stop = time.time_ns()
+            listTimeY.append((stop-start)/1e+6)
+            if(retTol < tol):
                 break
             beta = r.T @ r / numAlpha # this uses new r
             d = r + beta * d
-            #do some stuff
-            stop = time.time_ns()
-            listTimeY.append((stop-start)/1e+6)
         w.write("A*x = b\n")
         w.write(f"Shape of A:{A.shape}\n A:\n{A}\n")
         w.write(f"Shape of x:{x.shape}\n CG x:\n{x}\n")
@@ -111,7 +110,7 @@ class ConjugateGradient:
         w.write(f"[CG] last iteration: {last_iteration}, residual: {retTol[0][0]}, time: {listTimeY[-1]}ms")
         
         w.close()
-        print(f"[CG] last iteration: {last_iteration}, residual: {retTol[0][0]}, time: {listTimeY[-1]}ms")
+        print(f"[CG] last iteration: {last_iteration}, residual: {retTol[0][0]}, time: {listTimeY[-1]}ms, tollerance: {tol}")
 
         # return listPoints
         return listPointsY,last_iteration,listTimeY

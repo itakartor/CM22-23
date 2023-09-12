@@ -30,7 +30,7 @@ index_chart:int = 1
 colors_list:list[str] = ['green','red','blue']
 titles_list:list[str] = ['Complete','Grid','RMF']
 
-tollerance:float = 1e-4
+tollerance:float = 1e-10
 
 fig,ax = plt.subplots(2, 1, constrained_layout = True)
 for inM in listEMatrix:
@@ -97,13 +97,6 @@ for inM in listEMatrix:
     plt.show()
     plt.subplots_adjust(hspace=0.5)
 
-
-    # Original System Conjugate
-
-    conjugate.instanceProblem.A = A
-    conjugate.instanceProblem.b = b_full
-    residual_Cg,last_iteration_Cg,listTimeY_Cg = conjugate.start_cg(inTol = tollerance)
-    
     # Original System MINRES
 
     last_iteration_MINRES,xc_MINRES,residual_MINRES,exit_MINRES,listTimeY2_MINRES = custom_minres(A,b_full, maxiter=A.shape[0], tol = tollerance)
@@ -113,9 +106,8 @@ for inM in listEMatrix:
     ax.set_title(TITLE_CHART_ORIGINAL)
     ax.set_ylabel(TITLE_COLUMN_RESIDUAL)
     ax.set_xlabel(TITLE_COLUMN_ITERATION)
-    ax.set_yticks(np.arange(residual_Cg[0], residual_Cg[-1], 1e+1))
+    ax.set_yticks(np.arange(residual_MINRES[0], residual_MINRES[-1], 1e+1))
     ax.axline((A.shape[0] - 1, .0), (A.shape[0] - 1, .1), color='C3')
-    ax.semilogy(residual_Cg,linestyle="solid",color = 'red')
     ax.semilogy(residual_MINRES,linestyle="solid",color = 'blue')
 
     plt.suptitle(titles_list[index_chart - 1],x = 0.55)
@@ -124,15 +116,7 @@ for inM in listEMatrix:
 
     # Time
 
-    ax = plt.subplot(2,1,1)
-    ax.grid(True)
-    ax.set_title(TITLE_CHART_CG)
-    ax.set_ylabel(TITLE_COLUMN_TIME)
-    ax.set_xlabel(TITLE_COLUMN_ITERATION)
-    ax.set_yticks(np.arange(listTimeY_Cg[0], listTimeY_Cg[-1], 2))
-    ax.semilogy(listTimeY_Cg,linestyle="solid",color = 'red')
-
-    ax = plt.subplot(2,1,2)
+    ax = plt.subplot(1,1,1)
     ax.grid(True)
     ax.set_title(TITLE_CHART_MINRES)
     ax.set_ylabel(TITLE_COLUMN_TIME)

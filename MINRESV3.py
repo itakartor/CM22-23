@@ -235,7 +235,7 @@ def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float =
         #Computation of the residual of the solution
         res = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,xc))
         res = np.linalg.norm(res)
-        yPoints.append(res)
+        yPoints.append(res/np.linalg.norm(xc))
         
         stop = time.time_ns()
         listTimeY.append((stop-start)/1e+6)
@@ -255,7 +255,7 @@ def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float =
         
         # res.append(r)
         #check if r is under the tollerance
-        if res < tol*tol:
+        if res < tol:
             exitRes = exitmsgs[1].format(j=j)
             break
         
@@ -299,7 +299,7 @@ def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float =
         exitRes = exitmsgs[3].format(j=j+1)
         
     # return j+1,x,xc,res,yPoints,exit
-    print(f"[MINRES] last iteration: {j}, residual: {yPoints[-1]}, time: {listTimeY[-1]}ms")
+    print(f"[MINRES] last iteration: {j}, residual: {res}, time: {listTimeY[-1]}ms, tollerance: {tol}")
     return j+1,xc,yPoints,exitRes,listTimeY
 
 

@@ -116,10 +116,11 @@ def lanczos(A,v1,v0,beta1,func=__prodMV):
     return alpha,beta2,v_next
     
 @timeit    
-def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float = 1e-5, maxiter:int = None):
+def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = None, tol:float = 1e-5, maxiter:int = None):
     #initialize variable
     start = time.time_ns()
     listTimeY:list[float] = []
+    listXpoints:list[np.ndarray] = []
     n:int = len(b)
     if maxiter == None:
         maxiter = n * 5
@@ -148,50 +149,34 @@ def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float =
     if x0 == None:
         w:np.ndarray = b.copy()
         w = w.reshape((len(b),1))
-        #xc solution
+        #xc solution -> column vector  [x,y]
         xc:np.ndarray = np.zeros((len(b),1))
     else:
         w:np.ndarray = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x0))
         xc:np.ndarray = x0.copy()
-    
+    listXpoints.append(xc[m_dimension:,:])
     b_norm:float = np.linalg.norm(w) #Beta1 norm
     beta1:float = b_norm #beta1 -> betaj-1
-    # print(f'w {w.shape}')
     v1:np.ndarray = np.divide(w,beta1) # first vector of V
     v0:np.ndarray = np.zeros((len(v1),1))
-    # V = v1.copy()
     p1 = p0 = pk = np.zeros((len(v1),1)) #Vector of the matrix P_k= V_kR^-1 -> P_kR = V_k where R is a triagonal matrix of T_k QR factorization
     
     yPoints:list[float] = [] # residual of second solution
-    # res:list[float] = [] #residual of firse solution
     T = np.zeros((0, 0)) #Initialize Empty Tridiagonal Matrix
-    
-    # print(f'A {A.shape}')
-    # print(f'b {b.shape}')
-    # print(f'w {w.shape}')
-    # print(f'x0 {x0.shape}')
-    # print(f'xc {xc.shape}')
-    # print(f'v0 {v0.shape}')
-    # print(f'v1 {v1.shape}')
 
     #Iteraions
     for j in range(maxiter):
-        # print(f'iteration: {j}, maxIteration: {maxiter}')
         #Lanczos step iteration
         alpha,beta2,v_next = lanczos(A,v1,v0,beta1)
         #update of vj and vj+1
         v0 = v1.copy()
         v1 = v_next.copy()
-        
-        #Update of Martix V of Krylov space that we need to eliminate
-        # V = np.hstack((V,v1.reshape((len(v1),1))))
 
         #Triagonal matrix T construction after Lanczos step
         T = tridiag(T,beta1,alpha,beta2)
         
         #if betaj+1 == 0 breakdown
         if isclose(beta2,0.0):
-            # print(beta2)
             exitRes = exitmsgs[2].format(j=j)
             break
         #update bj=bj+1 for the next iteration
@@ -206,101 +191,46 @@ def custom_minres(A:np.ndarray, b:np.ndarray , x0:np.ndarray = None, tol:float =
         #Computation of the last 3  Pk vectors
         if j == 0 :
             pk = np.divide(v0,R[j,j])
-            # P = pk
-
+            
         if j == 1 :
             pk = np.divide(np.subtract(v0 , np.dot(p1, R[j-1,j])),R[j,j])
-            # P = np.hstack((P,pk))
 
         if j >= 2 :
             p01 = p1 * R[j-1,j] + p0 * R[j-2,j]
             diff = np.subtract(v0,p01)
             pk = np.divide(diff,R[j,j])
-            # print(f'pk {pk.shape}')
-            # P = np.hstack((P,pk))
 
         #update 3 vectors for the next stepo    
         p0 = p1.copy()
         p1 = pk.copy()
         #increment of the solution xc
         xc = xc + np.dot(tj,pk)
-        # print('P V r rinv')
-        # print(P.shape)
-        # print(V.shape)
-        # print(R.shape)
-        # print(np.linalg.inv(R[:-1,:]).shape)
-        # if j>0:
-        #     O = P @ R[:-1,:]
-        
+        listXpoints.append(xc[m_dimension:,:])
+        # print(xc)
+        # print(xc.shape)
+        # print(listXpoints[1])
+        # print(listXpoints[1].shape)
+        # input('premi')
         #Computation of the residual of the solution
         res = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,xc))
         res = np.linalg.norm(res)
-        yPoints.append(res/np.linalg.norm(xc))
+        yPoints.append(res)
         
         stop = time.time_ns()
         listTimeY.append((stop-start)/1e+6)
-        #vector (Beta_1 e1) for the iteration j
-        # v = np.eye(j+2,1) * b_norm 
-        # #Working solution using V_k in memory for discover y_k = T_k-b1e1
-        # y = QR_ls(T,v) 
-        
-        # #Computation of solution xk = Vk @ yk    
-        # x = np.dot(V[:,:-1],y)
-        # x = x.reshape(len(x),1)
-        
-        # x = x + x0
-        #Computation of the residual
-        # r = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x))
-        # r = np.linalg.norm(r)
-        
-        # res.append(r)
+
         #check if r is under the tollerance
         if res < tol:
             exitRes = exitmsgs[1].format(j=j)
             break
         
-        # print(f'r {r.shape}')
-        # print(f'res {res.shape}')
-        # print(f'x {x.shape}')
-        # print(f'x0 {x0.shape}')
-        # print(f'v {v.shape}')
-        # print(f'v0 {v0.shape}')
-        # print(f'v1 {v1.shape}')
-        # print(f'v_next {v_next.shape}')
-        # print(f'y {y.shape}')
-        # print(f'p0 {p0.shape}')
-        # print(f'p1 {p1.shape}')
-        # print(f'pk {pk.shape}')
-        # print(f'V {V.shape}')
-        # print(f'T {T.shape}')
-        # print(f'r {r}')
-        # print(f'res {res}')
-        # print(f'x {x}')
-        # # print(f'x0 {x0}')
-        # print(f'v {v}')
-        # print(f'v0 {v0}')
-        # print(f'v1 {v1}')
-        # print(f'v_next {v_next}')
-        # # print(f'y {y}')
-        # print(f'p0 {p0}')
-        # print(f'p1 {p1}')
-        # print(f'pk {pk}')
-        # print(f'V {V}')
-        # if j > 0:
-        #     print(f'O {O}')
-        # print(f'T {T}')
-        # print(f'G {G}')
-        # print(f'{b_norm}')
-        # print(f'R {R}')
-        # print('################################################################################################################################################')
-        # input('premi ####################################################################################')
     #check if exit because maxiteration reached
     if j+1 == maxiter:
         exitRes = exitmsgs[3].format(j=j+1)
         
     # return j+1,x,xc,res,yPoints,exit
     print(f"[MINRES] last iteration: {j}, residual: {res}, time: {listTimeY[-1]}ms, tollerance: {tol}")
-    return j+1,xc,yPoints,exitRes,listTimeY
+    return j+1,xc,yPoints,exitRes,listTimeY,listXpoints
 
 
 #use lib to find eigenvalues of matix H

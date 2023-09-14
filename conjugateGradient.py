@@ -66,14 +66,15 @@ class ConjugateGradient:
     def get_list_point_cg(self,A:np.ndarray, b:np.ndarray, x0:np.ndarray,tol:float,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") -> tuple[list[float],int,list[float]]:
         start = time.time_ns()
         w = open(os.path.join(path_output,f"{solution_file}-{name}.txt"), "w")
-        listPointsY:list[float] = []
+        listResiduals:list[float] = []
+        list_y_points:list[np.ndarray] = []
         listTimeY:list[float] = []
         if(A.shape[1] != b.shape[0]):
             print('\n-------------------------------------')
             print("ERROR on dimension")
             print(f"dim A: {A.shape}, dim b: {b.shape}")
             print('-------------------------------------\n')
-            return listPointsY
+            return None,None,None
         r:np.ndarray
         if(x0 == None):
             x = np.zeros((A.shape[0],1))
@@ -81,6 +82,7 @@ class ConjugateGradient:
         else:
             x = x0.copy()
             r = np.reshape(np.subtract(np.copy(b), A @ x0),(A.shape[1],1))# - A*x0 # residual Ax - b
+        list_y_points.append(x)
         d:np.ndarray = r # directions vector
         alpha:float = 0
         beta:float = 0
@@ -92,11 +94,11 @@ class ConjugateGradient:
             denAlpha:float = d.T @ Ad
 
             alpha = numAlpha/denAlpha
-            x = x + alpha * d
-            
+            x = x + alpha * d # this is the y of the system norm(H*y - e*b)
+            list_y_points.append(x)
             r = r - alpha *Ad
             retTol = r.T @ r
-            listPointsY.append(np.linalg.norm(retTol[0][0])/np.linalg.norm(x))
+            listResiduals.append(np.linalg.norm(retTol[0][0]))
             stop = time.time_ns()
             listTimeY.append((stop-start)/1e+6)
             if(retTol < tol):
@@ -113,7 +115,7 @@ class ConjugateGradient:
         print(f"[CG] last iteration: {last_iteration}, residual: {retTol[0][0]}, time: {listTimeY[-1]}ms, tollerance: {tol}")
 
         # return listPoints
-        return listPointsY,last_iteration,listTimeY
+        return listResiduals,last_iteration,listTimeY,list_y_points
 
     #compute the conjugate algorithm for all the problem instances
     @timeit
@@ -121,7 +123,7 @@ class ConjugateGradient:
         print(f"rank matrix: {self.instanceProblem.A.shape[0]}")
         points:list[float] = []
         if(inNumIteration != 0):
-            points,last_iteration,listTimeY = self.get_list_point_cg(
+            points,last_iteration,listTimeY,list_y_points = self.get_list_point_cg(
                     A=self.instanceProblem.A,
                     b=np.transpose(self.instanceProblem.b),
                     x0=np.zeros((self.instanceProblem.A.shape[0],1)),
@@ -130,7 +132,7 @@ class ConjugateGradient:
                     name=self.instanceProblem.name
                 )
         else:
-            points,last_iteration,listTimeY = self.get_list_point_cg(
+            points,last_iteration,listTimeY,list_y_points = self.get_list_point_cg(
                     A=self.instanceProblem.A,
                     b=np.transpose(self.instanceProblem.b),
                     x0=None,
@@ -138,4 +140,4 @@ class ConjugateGradient:
                     numIteration=self.instanceProblem.A.shape[0], # rank of the matrix
                     name=self.instanceProblem.name
                 )
-        return points,last_iteration,listTimeY
+        return points,last_iteration,listTimeY,list_y_points

@@ -37,9 +37,9 @@ def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray):
     # print("det: {det}")
     matrixInv = incidenceMatrix.getI()
     
-    print(matrixInv)
+    # print(matrixInv)
     x = matrixInv @ c.T
-    print(f"\nDIRECT TEST x: {x}\n")
+    # print(f"\nDIRECT TEST x: {x}\n")
     
 def invSimpleDiag(D:np.ndarray):
     for i in range(D.shape[0]):
@@ -62,7 +62,38 @@ def instanceofMCF(D,E,b,c):
 #Funzione che riceve la matrice di incidenza e la converte in un grafo di tipo networkx DA TESTARE
 def incidenceToGraph(A):
     am =(np.dot(A,A.T)>0).astype(int)
-    print("Adjacence:",am)
+    # print("Adjacence:",am)
     # G=nx.convert_matrix.from_numpy_array(am,parallel_edges=True,create_using=nx.DiGraph)
     # nx.draw(G)
     plt.show()
+
+def compute_residual_reduced_system(list_y:list[np.ndarray],D:np.ndarray,E:np.ndarray,b_i:np.ndarray,c:np.ndarray):
+    list_result:list[float] = []
+    invDiag = invSimpleDiag(D)
+    matrix_diagInv = np.matmul(E,invDiag)
+    #E*D^-1*Et
+    A:np.ndarray = np.matmul(matrix_diagInv,E.T)
+    b:np.ndarray = np.subtract(np.matmul(matrix_diagInv,np.reshape(b_i,(b_i.shape[0],1))),np.reshape(c,(c.shape[0],1)))    
+    for y in list_y:
+        if(np.linalg.norm(y) > 0):
+            y = y/np.linalg.norm(y)
+        # print(f'mult: {np.matmul(A,y).shape}, b: {b.shape}, A:{A.shape}, y:{y.shape}')
+        # print(np.subtract(np.reshape(b,(len(b),1)),np.dot(A,y)).shape)
+        list_result.append(np.linalg.norm(np.subtract(np.reshape(b,(len(b),1)),np.dot(A,y))))
+    return list_result
+
+def compute_x_cg(list_y:list[np.ndarray], D:np.ndarray, E_T:np.ndarray, b:np.ndarray)-> list[np.ndarray]:
+    list_result:list[np.ndarray] = []
+    D_inv:np.ndarray = invSimpleDiag(D)
+    
+    for vector in list_y:
+        v = np.matmul(np.matmul(-D_inv,E_T),vector) + np.matmul(D_inv,b).reshape((D_inv.shape[0],1))
+        list_result.append(np.concatenate([v, vector])) # [x, y]
+    return list_result
+
+def compute_residual(list_x:list[np.ndarray],A:np.ndarray, b:np.ndarray)-> list[np.ndarray]:
+    list_result:list[float] = []
+    for x in list_x:
+        # print(f'shape A: {A.shape} shape x: {x.shape} shape b: {b.shape}')
+        list_result.append(np.linalg.norm(np.matmul(A,x) - b))
+    return list_result

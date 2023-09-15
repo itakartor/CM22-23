@@ -232,7 +232,7 @@ def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = 
         
     # return j+1,x,xc,res,yPoints,exit
     w2 = open(os.path.join(configs.PATH_DIRECTORY_OUTPUT,f"{configs.NAME_FILE_STATISTIC_SOLUTION}.txt"), "a")
-    w2.write(f"[CG] last iteration: {j}, residual: {res}, time: {listTimeY[-1]}ms, tollerance: {tol}")
+    w2.write(f"[MINRES] last iteration: {j}, residual: {res}, time: {listTimeY[-1]}ms, tollerance: {tol}, maxiter: {maxiter} \n")
     w2.close()
     print(f"[MINRES] last iteration: {j}, residual: {res}, time: {listTimeY[-1]}ms, tollerance: {tol}")
     return j+1,xc,yPoints,exitRes,listTimeY,listXpoints

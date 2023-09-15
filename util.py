@@ -67,19 +67,14 @@ def incidenceToGraph(A):
     # nx.draw(G)
     plt.show()
 
-def compute_residual_reduced_system(list_y:list[np.ndarray],D:np.ndarray,E:np.ndarray,b_i:np.ndarray,c:np.ndarray):
+def compute_residual_reduced_system(list_y:list[np.ndarray],b_reduced:np.ndarray,A_reduced:np.ndarray):
     list_result:list[float] = []
-    invDiag = invSimpleDiag(D)
-    matrix_diagInv = np.matmul(E,invDiag)
-    #E*D^-1*Et
-    A:np.ndarray = np.matmul(matrix_diagInv,E.T)
-    b:np.ndarray = np.subtract(np.matmul(matrix_diagInv,np.reshape(b_i,(b_i.shape[0],1))),np.reshape(c,(c.shape[0],1)))    
     for y in list_y:
-        if(np.linalg.norm(y) > 0):
-            y = y/np.linalg.norm(y)
+        # if(np.linalg.norm(y) > 0):
+        #     y = y/np.linalg.norm(y)
         # print(f'mult: {np.matmul(A,y).shape}, b: {b.shape}, A:{A.shape}, y:{y.shape}')
         # print(np.subtract(np.reshape(b,(len(b),1)),np.dot(A,y)).shape)
-        list_result.append(np.linalg.norm(np.subtract(np.reshape(b,(len(b),1)),np.dot(A,y))))
+        list_result.append(np.linalg.norm(np.subtract(np.reshape(b_reduced,(len(b_reduced),1)),np.dot(A_reduced,y))))
     return list_result
 
 def compute_x_cg(list_y:list[np.ndarray], D:np.ndarray, E_T:np.ndarray, b:np.ndarray)-> list[np.ndarray]:

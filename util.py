@@ -69,12 +69,16 @@ def incidenceToGraph(A):
 
 def compute_residual_reduced_system(list_y:list[np.ndarray],b_reduced:np.ndarray,A_reduced:np.ndarray):
     list_result:list[float] = []
+    b = np.reshape(b_reduced,(len(b_reduced),1))
     for y in list_y:
         # if(np.linalg.norm(y) > 0):
         #     y = y/np.linalg.norm(y)
         # print(f'mult: {np.matmul(A,y).shape}, b: {b.shape}, A:{A.shape}, y:{y.shape}')
         # print(np.subtract(np.reshape(b,(len(b),1)),np.dot(A,y)).shape)
-        list_result.append(np.linalg.norm(np.subtract(np.reshape(b_reduced,(len(b_reduced),1)),np.dot(A_reduced,y))))
+        # A^T*b - A^T*A*x = r
+        list_result.append(
+            np.linalg.norm(np.subtract(np.dot(A_reduced,b),np.dot(np.dot(A_reduced.T,A_reduced),y))) / np.linalg.norm(np.dot(A_reduced.T,b))
+        )
     return list_result
 
 def compute_x_cg(list_y:list[np.ndarray], D:np.ndarray, E_T:np.ndarray, b:np.ndarray)-> list[np.ndarray]:

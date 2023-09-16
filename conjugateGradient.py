@@ -113,7 +113,7 @@ class ConjugateGradient:
         
         w.close()
         w2 = open(os.path.join(path_output,f"{configs.NAME_FILE_STATISTIC_SOLUTION}.txt"), "a")
-        w2.write(f"[CG] last iteration: {last_iteration}, residual: {retTol[0][0]}, time: {listTimeY[-1]}ms, tollerance: {tol}, maxiter: {numIteration} \n")
+        w2.write(f"CG& & {numIteration}& {last_iteration}& {listTimeY[-1]} ms& {retTol[0][0]} \\ \n")
         print(f"[CG] last iteration: {last_iteration}, residual: {retTol[0][0]}, time: {listTimeY[-1]}ms, tollerance: {tol}, maxiter: {numIteration} \n")
         w2.close()
         # return listPoints

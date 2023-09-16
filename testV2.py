@@ -1,3 +1,4 @@
+import os
 from matplotlib.ticker import AutoLocator, IndexLocator, LinearLocator, LogLocator
 import numpy as np
 import IncidenceMatrixV2 
@@ -5,7 +6,7 @@ import util
 # from scipy.sparse.linalg import minresB
 from MINRESV3 import  custom_minres
 from conjugateGradient import ConjugateGradient as CG
-
+import configs
 import matplotlib.pyplot as plt
 
 #bib reference
@@ -23,11 +24,12 @@ listEMatrix:list[IncidenceMatrixV2.IncidenceMatrix] = IncidenceMatrixV2.buildInc
 #for each Incdence matrix we build the Matrix A and the vector B from |D   E|=|c|
 #                                                                     |E^t 0| |b|
 index_chart:int = 1
-colors_list:list[str] = ['green','red','blue']
 titles_list:list[str] = ['Complete','Grid','RMF']
 
 tollerance:float = 1e-6
-
+w2 = open(os.path.join(configs.PATH_DIRECTORY_OUTPUT,f"{configs.NAME_FILE_STATISTIC_SOLUTION}.txt"), "a")
+w2.write("##############################################################################\n")
+w2.close()
 fig,ax = plt.subplots(2, 1, constrained_layout = True)
 for inM in listEMatrix:
     print("Start solve: ",inM.generator)
@@ -57,7 +59,7 @@ for inM in listEMatrix:
     line = ax.axline((reduced_A.shape[0] - 1, .0), (reduced_A.shape[0] - 1, .1), color='C3')
     ax.semilogy(residual_Cgr,linestyle="solid",color = 'red')
     
-    plt.suptitle(titles_list[index_chart - 1],x = 0.5)
+    plt.suptitle(titles_list[index_chart - 1],x = 0.55)
     plt.show()
     plt.subplots_adjust(hspace=0.5)
 
@@ -74,7 +76,7 @@ for inM in listEMatrix:
     ax.axline((A.shape[0] - 1, .0), (A.shape[0] - 1, .1), color='C3')
     ax.semilogy(residual_MINRES,linestyle="solid",color = 'blue')
 
-    plt.suptitle(titles_list[index_chart - 1],x = 0.5)
+    plt.suptitle(titles_list[index_chart - 1],x = 0.55)
     plt.show()
     plt.subplots_adjust(hspace=0.5)
 
@@ -96,15 +98,12 @@ for inM in listEMatrix:
     ax.set_yticks(np.arange(listTimeY2_MINRES[0], listTimeY2_MINRES[-1], 2))
     ax.semilogy(listTimeY2_MINRES,linestyle="solid",color = 'blue')
  
-    plt.suptitle(f'Time Tracking {titles_list[index_chart - 1]}',x = 0.5)
+    plt.suptitle(f'Time Tracking {titles_list[index_chart - 1]}',x = 0.55)
     plt.show()
     plt.subplots_adjust(hspace=0.5)
 
     # Compare x and residual on the Original System
 
-    # list_x_points_cg = util.compute_x_cg(list_y_points, D, E.T, b)
-    # list_residual_cg:list[float] = util.compute_residual(list_x_points_cg,A, b_full)
-    # list_residual_MINRES:list[float] = util.compute_residual(list_x_points_MINRES,A, b_full)
     list_residual_cg:list[float] = util.compute_residual_reduced_system(list_y_points, reduced_b, reduced_A)
     list_residual_MINRES:list[float] = util.compute_residual_reduced_system(list_x_points_MINRES, reduced_b, reduced_A)
     

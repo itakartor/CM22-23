@@ -196,7 +196,7 @@ def buildArrayCosts(dictArches:dict) -> np.array:
        b = np.append(b,[[dictArches[key].cost]])
     return b
 # this function has to calculate the condition Ex = c
-@timeit
+# @timeit
 def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray):
     # det = np.linalg.det(incidenceMatrix)
     # print("det: {det}")
@@ -228,7 +228,7 @@ def createInstanceMCF_CG(eMatrixs:list) -> list[istanceMCF_CG]:
 # b is a vector of system Ax = b
 # x0 is the starting point
 # n is the number of iterations of the algorithm
-@timeit
+# @timeit
 def conjugateGradient(A:np.ndarray, b:np.ndarray, x:np.ndarray, n:int) ->listOfPointsXY:
     w = open(os.path.join(PATH_DIRECTORY_OUTPUT,f"{NAME_FILE_SOLUTION}.txt"), "w")
     xGraph:list[int] = [] # number of iteration

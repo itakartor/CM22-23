@@ -3,8 +3,6 @@ import os
 import time
 from functools import wraps
 import numpy as np
-# import networkx as nx
-import matplotlib.pyplot as plt
 
 def timeit(func):
     @wraps(func)
@@ -30,17 +28,6 @@ def creationDir(nameDir:str):
 def diagonalM(nCols:int) -> np.ndarray:
         return np.diag(np.random.rand(1,nCols)[0])
 
-# this function has to calculate the condition Ex = c
-@timeit
-def testConservationRule(incidenceMatrix:np.ndarray,c:np.ndarray):
-    # det = np.linalg.det(incidenceMatrix)
-    # print("det: {det}")
-    matrixInv = incidenceMatrix.getI()
-    
-    # print(matrixInv)
-    x = matrixInv @ c.T
-    # print(f"\nDIRECT TEST x: {x}\n")
-    
 def invSimpleDiag(D:np.ndarray):
     for i in range(D.shape[0]):
         D[i][i] = 1/D[i][i]
@@ -60,12 +47,12 @@ def instanceofMCF(D,E,b,c):
     return A,b
 
 #Funzione che riceve la matrice di incidenza e la converte in un grafo di tipo networkx DA TESTARE
-def incidenceToGraph(A):
-    am =(np.dot(A,A.T)>0).astype(int)
+# def incidenceToGraph(A):
+#     am =(np.dot(A,A.T)>0).astype(int)
     # print("Adjacence:",am)
     # G=nx.convert_matrix.from_numpy_array(am,parallel_edges=True,create_using=nx.DiGraph)
     # nx.draw(G)
-    plt.show()
+    # plt.show()
 
 def compute_residual_reduced_system(list_y:list[np.ndarray],b_reduced:np.ndarray,A_reduced:np.ndarray):
     list_result:list[float] = []

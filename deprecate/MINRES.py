@@ -52,7 +52,7 @@ class MINRES:
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     # tol is the tollerance for break the cycle of the algorithm
-    @timeit
+    # @timeit
     def getListPointMINRES(self,numIteration:int,tol:np.double,A:np.ndarray, b:np.ndarray, 
                            x0:np.ndarray,
                            path_output:str=configs.PATH_DIRECTORY_OUTPUT,
@@ -135,7 +135,7 @@ class MINRES:
         return listPoints
 
     #compute the conjugate algorithm for all the problem instances
-    @timeit
+    # @timeit
     def start_MINRES(self,draw_graph=configs.ACTIVE_DRAW_GRAPH, numIteration:int=0, tol:np.double=1e-3):
         i:int =1
         for instance in self.listIstancesProblem:

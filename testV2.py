@@ -1,5 +1,4 @@
 import os
-from matplotlib.ticker import AutoLocator, IndexLocator, LinearLocator, LogLocator
 import numpy as np
 import IncidenceMatrixV2 
 import util 
@@ -18,6 +17,29 @@ TITLE_COLUMN_RESIDUAL:str = 'Residual'
 TITLE_COLUMN_TIME:str = 'Time (ms)'
 TITLE_CHART_CG:str = 'Conjugate'
 TITLE_CHART_MINRES:str = 'MINRES'
+
+# https://tobydriscoll.net/fnc-julia/krylov/minrescg.html
+def eig_limit(A:np.ndarray, num_iterations:int, r0:np.ndarray) -> list[float]:
+    eig_values = np.linalg.eig(A)[0]
+    # print(f'numero di autovalori: {len(eig_values)}')
+    new_list_positive:list[float] = []
+    new_list_negative:list[float] = []
+    for eig in eig_values:
+        if(eig > 0):
+            new_list_positive.append(eig)
+        elif(eig < 0):
+            new_list_negative.append(eig)
+    max_eig_value_positive = np.max(new_list_positive)
+    min_eig_value_positive = np.min(new_list_positive)
+    max_eig_value_negative = np.min(new_list_negative)
+    min_eig_value_negative = np.max(new_list_negative)
+    condition_number_positive:float = np.abs(max_eig_value_positive) / np.abs(min_eig_value_positive)
+    condition_number_negative:float = np.abs(max_eig_value_negative) / np.abs(min_eig_value_negative)
+    limit_convergence_MINRES:list[float] = []
+    for i in range(num_iterations):
+        limit_convergence_MINRES.append(np.power((np.sqrt(condition_number_positive*condition_number_negative) - 1) / (np.sqrt(condition_number_positive*condition_number_negative) + 1),(i + 1)/2)* np.linalg.norm(r0))
+    
+    return limit_convergence_MINRES
 #Build the Incidence Matrix of the graphs generated |complete graph ,grid graph,rmf graph|
 listEMatrix:list[IncidenceMatrixV2.IncidenceMatrix] = IncidenceMatrixV2.buildIncidenceMatrix()
 
@@ -66,7 +88,7 @@ for inM in listEMatrix:
     # # Original System MINRES
 
     last_iteration_MINRES,xc_MINRES,residual_MINRES,exit_MINRES,listTimeY2_MINRES,list_x_points_MINRES = custom_minres(A,b_full, D.shape[0],maxiter=A.shape[0],tol = tollerance)
- 
+    list_limit_eig:list[float] = eig_limit(A,A.shape[0],b_full)
     ax = plt.subplot(1,1,1)
     ax.grid(True)
     ax.set_title(TITLE_CHART_MINRES)
@@ -74,6 +96,7 @@ for inM in listEMatrix:
     ax.set_xlabel(TITLE_COLUMN_ITERATION)
     ax.set_yticks(np.arange(residual_MINRES[0], residual_MINRES[-1], 1e+1))
     ax.axline((A.shape[0] - 1, .0), (A.shape[0] - 1, .1), color='C3')
+    ax.semilogy(list_limit_eig,linestyle="solid",color = 'green',label='Limit Minres')
     ax.semilogy(residual_MINRES,linestyle="solid",color = 'blue')
 
     plt.suptitle(titles_list[index_chart - 1],x = 0.55)
@@ -106,13 +129,15 @@ for inM in listEMatrix:
 
     list_residual_cg:list[float] = util.compute_residual_reduced_system(list_y_points, reduced_b, reduced_A)
     list_residual_MINRES:list[float] = util.compute_residual_reduced_system(list_x_points_MINRES, reduced_b, reduced_A)
-    
+    # list_limit_eig:list[float] = eig_limit(A,A.shape[0],list_residual_MINRES[0])
+
     ax = plt.subplot(1,1,1)
     ax.grid(True)
     ax.set_ylabel(TITLE_COLUMN_RESIDUAL)
     ax.set_xlabel(TITLE_COLUMN_ITERATION)
     ax.semilogy(list_residual_cg,linestyle="solid",color = 'red',label='CG')
     ax.semilogy(list_residual_MINRES,linestyle="solid",color = 'blue',label='MINRES')
+    # ax.semilogy(list_limit_eig,linestyle="solid",color = 'green',label='Limit Minres')
     ax.legend()
     plt.suptitle(f'Residual Compare on Reduced System {titles_list[index_chart - 1]}',x = 0.5)
     plt.show()

@@ -46,6 +46,7 @@ def QR_Householder(A,slower=False):
         Q[:,j:]= Q[:,j:]@H    
     return Q,R
 
+# @timeit
 def tridiag(T,beta1,alpha,beta2):
     if T.shape!=(0,0) : 
             zerorow=np.zeros((1,T.shape[1]))
@@ -59,16 +60,16 @@ def tridiag(T,beta1,alpha,beta2):
         T=np.vstack((alpha,beta2))
         T.reshape((2,1))
     return T
-
-def QR_givens_rotation(A):
+@timeit
+def QR_givens_rotation(A:np.ndarray):
     """
     QR-decomposition of rectangular matrix A using the Givens rotation method.
     """
     # Initialization of the orthogonal matrix Q and the upper triangular matrix R
     n, m = A.shape
-    Q = np.eye(n) #Givens Matrix 1 ...1 c s -c -s
-    R = np.copy(A)
-
+    Q:np.ndarray = np.eye(n) #Givens Matrix 1 ...1 c s -c -s
+    R:np.ndarray = np.copy(A)
+    
     rows, cols = np.tril_indices(n, -1, m)
     
     for (row, col) in zip(rows, cols):
@@ -117,7 +118,7 @@ def lanczos(A,v1,v0,beta1,func=__prodMV):
     
     return alpha,beta2,v_next
     
-@timeit    
+# @timeit    
 def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = None, tol:float = 1e-5, maxiter:int = None):
     #initialize variable
     start = time.time_ns()
@@ -233,7 +234,7 @@ def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = 
     # return j+1,x,xc,res,yPoints,exit
     w2 = open(os.path.join(configs.PATH_DIRECTORY_OUTPUT,f"{configs.NAME_FILE_STATISTIC_SOLUTION}.txt"), "a")
     # Algorithm& Graph& Rank& Iterations& Time execution& Residual
-    w2.write(f"MINRES& & {maxiter}& {j}& {listTimeY[-1]} ms& {res} \\ \n")
+    w2.write(f"MINRES& & {maxiter - 1}& {j}& {listTimeY[-1]} ms& {res} \\ \n")
     w2.close()
     print(f"[MINRES] last iteration: {j}, residual: {res}, time: {listTimeY[-1]}ms, tollerance: {tol}")
     return j+1,xc,yPoints,exitRes,listTimeY,listXpoints

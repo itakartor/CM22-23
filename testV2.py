@@ -25,20 +25,26 @@ def eig_limit(A:np.ndarray, num_iterations:int, r0:np.ndarray) -> list[float]:
     new_list_positive:list[float] = []
     new_list_negative:list[float] = []
     for eig in eig_values:
-        if(eig > 0):
+        if(eig > 1e-5):
             new_list_positive.append(eig)
-        elif(eig < 0):
+        elif(eig < 0 and eig < -1e-10):
             new_list_negative.append(eig)
+    # print(new_list_positive)
+    # print('--------------------------------')
+    # print(new_list_negative)
     max_eig_value_positive = np.max(new_list_positive)
     min_eig_value_positive = np.min(new_list_positive)
     max_eig_value_negative = np.min(new_list_negative)
     min_eig_value_negative = np.max(new_list_negative)
+    # print(f'max P {max_eig_value_positive}, min P {min_eig_value_positive}, max N {max_eig_value_negative}, min N {min_eig_value_negative}')
     condition_number_positive:float = np.abs(max_eig_value_positive) / np.abs(min_eig_value_positive)
     condition_number_negative:float = np.abs(max_eig_value_negative) / np.abs(min_eig_value_negative)
+    # print(f'CP {condition_number_positive}, CN {condition_number_negative}')
+    # input('premi')
     limit_convergence_MINRES:list[float] = []
     for i in range(num_iterations):
-        limit_convergence_MINRES.append(np.power((np.sqrt(condition_number_positive*condition_number_negative) - 1) / (np.sqrt(condition_number_positive*condition_number_negative) + 1),(i + 1)/2)* np.linalg.norm(r0))
-    
+        limit_convergence_MINRES.append(np.power(np.divide(np.sqrt(condition_number_positive*condition_number_negative) - 1, np.sqrt(condition_number_positive*condition_number_negative) + 1),np.floor((i + 1)/2))* np.linalg.norm(r0)) 
+    # * np.linalg.norm(r0)
     return limit_convergence_MINRES
 #Build the Incidence Matrix of the graphs generated |complete graph ,grid graph,rmf graph|
 listEMatrix:list[IncidenceMatrixV2.IncidenceMatrix] = IncidenceMatrixV2.buildIncidenceMatrix()
@@ -88,7 +94,7 @@ for inM in listEMatrix:
     # # Original System MINRES
 
     last_iteration_MINRES,xc_MINRES,residual_MINRES,exit_MINRES,listTimeY2_MINRES,list_x_points_MINRES = custom_minres(A,b_full, D.shape[0],maxiter=A.shape[0],tol = tollerance)
-    list_limit_eig:list[float] = eig_limit(A,A.shape[0],b_full)
+    list_limit_eig:list[float] = eig_limit(A,last_iteration_MINRES,b_full)
     ax = plt.subplot(1,1,1)
     ax.grid(True)
     ax.set_title(TITLE_CHART_MINRES)

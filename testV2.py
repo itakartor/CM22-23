@@ -18,34 +18,6 @@ TITLE_COLUMN_TIME:str = 'Time (ms)'
 TITLE_CHART_CG:str = 'Conjugate'
 TITLE_CHART_MINRES:str = 'MINRES'
 
-# https://tobydriscoll.net/fnc-julia/krylov/minrescg.html
-def eig_limit(A:np.ndarray, num_iterations:int, r0:np.ndarray) -> list[float]:
-    eig_values = np.linalg.eig(A)[0]
-    # print(f'numero di autovalori: {len(eig_values)}')
-    new_list_positive:list[float] = []
-    new_list_negative:list[float] = []
-    for eig in eig_values:
-        if(eig > 1e-5):
-            new_list_positive.append(eig)
-        elif(eig < 0 and eig < -1e-10):
-            new_list_negative.append(eig)
-    # print(new_list_positive)
-    # print('--------------------------------')
-    # print(new_list_negative)
-    max_eig_value_positive = np.max(new_list_positive)
-    min_eig_value_positive = np.min(new_list_positive)
-    max_eig_value_negative = np.min(new_list_negative)
-    min_eig_value_negative = np.max(new_list_negative)
-    # print(f'max P {max_eig_value_positive}, min P {min_eig_value_positive}, max N {max_eig_value_negative}, min N {min_eig_value_negative}')
-    condition_number_positive:float = np.abs(max_eig_value_positive) / np.abs(min_eig_value_positive)
-    condition_number_negative:float = np.abs(max_eig_value_negative) / np.abs(min_eig_value_negative)
-    # print(f'CP {condition_number_positive}, CN {condition_number_negative}')
-    # input('premi')
-    limit_convergence_MINRES:list[float] = []
-    for i in range(num_iterations):
-        limit_convergence_MINRES.append(np.power(np.divide(np.sqrt(condition_number_positive*condition_number_negative) - 1, np.sqrt(condition_number_positive*condition_number_negative) + 1),np.floor((i + 1)/2))* np.linalg.norm(r0)) 
-    # * np.linalg.norm(r0)
-    return limit_convergence_MINRES
 #Build the Incidence Matrix of the graphs generated |complete graph ,grid graph,rmf graph|
 listEMatrix:list[IncidenceMatrixV2.IncidenceMatrix] = IncidenceMatrixV2.buildIncidenceMatrix()
 
@@ -61,11 +33,12 @@ w2.close()
 fig,ax = plt.subplots(2, 1, constrained_layout = True)
 for inM in listEMatrix:
     print("Start solve: ",inM.generator)
-    E:np.ndarray = inM.m
+    # E:np.ndarray = inM.m
+    E:np.ndarray = np.eye(inM.m.shape[0],inM.m.shape[1])
     D:np.ndarray = util.diagonalM(E.shape[1])
     c:np.ndarray = np.array([n.deficit for  n in inM.nodes])
     b:np.ndarray = np.array([c.cost for c in inM.arcs])
-   
+    print(f'{E.shape},{D.shape},{b.shape},{c.shape}')
     A,b_full= util.instanceofMCF(D,E,b,c)
 
     conjugate = CG(inM)
@@ -74,7 +47,7 @@ for inM in listEMatrix:
     
     reduced_A = conjugate.instanceProblem.A
     reduced_b = conjugate.instanceProblem.b
-    residual_Cgr,last_iteration_Cgr,listTimeY_Cgr,list_y_points = conjugate.start_cg(inTol = tollerance)
+    residual_Cgr,last_iteration_Cgr,listTimeY_Cgr,list_y_points_Cg = conjugate.start_cg(inTol = tollerance)
 
     # Reduced System MINRES
 
@@ -93,8 +66,8 @@ for inM in listEMatrix:
 
     # # Original System MINRES
 
-    last_iteration_MINRES,xc_MINRES,residual_MINRES,exit_MINRES,listTimeY2_MINRES,list_x_points_MINRES = custom_minres(A,b_full, D.shape[0],maxiter=A.shape[0],tol = tollerance)
-    list_limit_eig:list[float] = eig_limit(A,last_iteration_MINRES,b_full)
+    last_iteration_MINRES,xc_MINRES,residual_MINRES,exit_MINRES,listTimeY2_MINRES,list_y_points_MINRES,list_x_points_MINRES = custom_minres(A, b_full, D.shape[0], maxiter=A.shape[0], tol = tollerance)
+    list_limit_eig:list[float] = util.eig_limit(A,last_iteration_MINRES,b_full)
     ax = plt.subplot(1,1,1)
     ax.grid(True)
     ax.set_title(TITLE_CHART_MINRES)
@@ -133,8 +106,11 @@ for inM in listEMatrix:
 
     # Compare x and residual on the Original System
 
-    list_residual_cg:list[float] = util.compute_residual_reduced_system(list_y_points, reduced_b, reduced_A)
-    list_residual_MINRES:list[float] = util.compute_residual_reduced_system(list_x_points_MINRES, reduced_b, reduced_A)
+    # list_residual_cg:list[float] = util.compute_residual_reduced_system(list_y_points_Cg, reduced_b, reduced_A)
+    list_x_cg:list[np.ndarray] = util.compute_x_cg(list_y_points_Cg,D,E.T,b)
+    list_residual_cg:list[float] = util.compute_residual(list_x_cg, A, b_full)
+    # list_residual_MINRES:list[float] = util.compute_residual_reduced_system(list_y_points_MINRES, reduced_b, reduced_A)
+    list_residual_MINRES:list[float] = util.compute_residual(list_x_points_MINRES, A, b_full)
     # list_limit_eig:list[float] = eig_limit(A,A.shape[0],list_residual_MINRES[0])
 
     ax = plt.subplot(1,1,1)
@@ -143,7 +119,7 @@ for inM in listEMatrix:
     ax.set_xlabel(TITLE_COLUMN_ITERATION)
     ax.semilogy(list_residual_cg,linestyle="solid",color = 'red',label='CG')
     ax.semilogy(list_residual_MINRES,linestyle="solid",color = 'blue',label='MINRES')
-    # ax.semilogy(list_limit_eig,linestyle="solid",color = 'green',label='Limit Minres')
+    ax.semilogy(list_limit_eig,linestyle="solid",color = 'green',label='Upperbound Minres')
     ax.legend()
     plt.suptitle(f'Residual Compare on Reduced System {titles_list[index_chart - 1]}',x = 0.5)
     plt.show()

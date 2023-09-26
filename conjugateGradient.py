@@ -98,7 +98,7 @@ class ConjugateGradient:
             list_y_points.append(x)
             r = r - alpha *Ad
             retTol = r.T @ r
-            listResiduals.append(np.linalg.norm(retTol[0][0]))
+            listResiduals.append(np.divide(np.linalg.norm(retTol[0][0]),np.linalg.norm(b)))
             stop = time.time_ns()
             listTimeY.append((stop-start)/1e+6)
             if(retTol < tol):

@@ -123,8 +123,10 @@ def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = 
     #initialize variable
     start = time.time_ns()
     listTimeY:list[float] = []
-    listXpoints:list[np.ndarray] = []
+    listYvectors:list[np.ndarray] = []
+    listXvector:list[np.ndarray] = []
     n:int = len(b)
+    b = np.reshape(b,(n,1))
     if maxiter == None:
         maxiter = n * 5
     
@@ -151,24 +153,28 @@ def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = 
     #Check start point
     if x0 == None:
         w:np.ndarray = b.copy()
-        w = w.reshape((len(b),1))
+        w = w.reshape((n,1))
         #xc solution -> column vector  [x,y]
-        xc:np.ndarray = np.zeros((len(b),1))
+        xc:np.ndarray = np.zeros((n,1))
     else:
-        w:np.ndarray = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,x0))
+        w:np.ndarray = np.subtract(b,np.dot(A,x0))
         xc:np.ndarray = x0.copy()
-    listXpoints.append(xc[m_dimension:,:])
+    listYvectors.append(xc[m_dimension:,:])
+    listXvector.append(xc)
     b_norm:float = np.linalg.norm(w) #Beta1 norm
     beta1:float = b_norm #beta1 -> betaj-1
     v1:np.ndarray = np.divide(w,beta1) # first vector of V
     v0:np.ndarray = np.zeros((len(v1),1))
     p1 = p0 = pk = np.zeros((len(v1),1)) #Vector of the matrix P_k= V_kR^-1 -> P_kR = V_k where R is a triagonal matrix of T_k QR factorization
     
-    yPoints:list[float] = [] # residual of second solution
+    residual_list:list[float] = [b_norm] # residual of second solution
     T = np.zeros((0, 0)) #Initialize Empty Tridiagonal Matrix
 
     #Iteraions
     for j in range(maxiter):
+        # print(xc[m_dimension,:], xc[m_dimension + 1,:])
+        # print(xc[m_dimension:,:])
+        # input('pèremi')
         #Lanczos step iteration
         alpha,beta2,v_next = lanczos(A,v1,v0,beta1)
         #update of vj and vj+1
@@ -208,16 +214,12 @@ def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = 
         p1 = pk.copy()
         #increment of the solution xc
         xc = xc + np.dot(tj,pk)
-        listXpoints.append(xc[m_dimension:,:])
-        # print(xc)
-        # print(xc.shape)
-        # print(listXpoints[1])
-        # print(listXpoints[1].shape)
-        # input('premi')
+        listYvectors.append(xc[m_dimension:,:])
+        listXvector.append(xc)
         #Computation of the residual of the solution
-        res = np.subtract(np.reshape(b,(len(b),1)),np.dot(A,xc))
-        res = np.linalg.norm(res)
-        yPoints.append(res)
+        res = np.subtract(b,np.dot(A,xc))
+        res = np.divide(np.linalg.norm(res),b_norm)
+        residual_list.append(res)
         
         stop = time.time_ns()
         listTimeY.append((stop-start)/1e+6)
@@ -231,13 +233,13 @@ def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = 
     if j+1 == maxiter:
         exitRes = exitmsgs[3].format(j=j+1)
         
-    # return j+1,x,xc,res,yPoints,exit
+    # return j+1,x,xc,res,residual_list,exit
     w2 = open(os.path.join(configs.PATH_DIRECTORY_OUTPUT,f"{configs.NAME_FILE_STATISTIC_SOLUTION}.txt"), "a")
     # Algorithm& Graph& Rank& Iterations& Time execution& Residual
     w2.write(f"MINRES& & {maxiter - 1}& {j}& {listTimeY[-1]} ms& {res} \\ \n")
     w2.close()
     print(f"[MINRES] last iteration: {j}, residual: {res}, time: {listTimeY[-1]}ms, tollerance: {tol}")
-    return j+1,xc,yPoints,exitRes,listTimeY,listXpoints
+    return j+1,xc,residual_list,exitRes,listTimeY,listYvectors,listXvector
 
 
 #use lib to find eigenvalues of matix H

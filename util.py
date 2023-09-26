@@ -56,30 +56,66 @@ def instanceofMCF(D,E,b,c):
 
 def compute_residual_reduced_system(list_y:list[np.ndarray],b_reduced:np.ndarray,A_reduced:np.ndarray):
     list_result:list[float] = []
-    b = np.reshape(b_reduced,(len(b_reduced),1))
+    b = np.reshape(b_reduced, (len(b_reduced), 1))
+    list_result.append(np.divide(np.linalg.norm(b), np.linalg.norm(b)))
     for y in list_y:
-        # if(np.linalg.norm(y) > 0):
-        #     y = y/np.linalg.norm(y)
-        # print(f'mult: {np.matmul(A,y).shape}, b: {b.shape}, A:{A.shape}, y:{y.shape}')
-        # print(np.subtract(np.reshape(b,(len(b),1)),np.dot(A,y)).shape)
         # A^T*b - A^T*A*x = r
+        # list_result.append(
+        #     np.divide(np.linalg.norm(np.subtract(np.dot(A_reduced.T, b), np.dot(np.dot(A_reduced.T, A_reduced), y))), np.linalg.norm(np.dot(A_reduced.T, b)))
+        # )
         list_result.append(
-            np.linalg.norm(np.subtract(np.dot(A_reduced,b),np.dot(np.dot(A_reduced.T,A_reduced),y))) / np.linalg.norm(np.dot(A_reduced.T,b))
+            np.divide(np.linalg.norm(np.subtract(b, np.dot(A_reduced, y))), np.linalg.norm(b))
         )
     return list_result
 
 def compute_x_cg(list_y:list[np.ndarray], D:np.ndarray, E_T:np.ndarray, b:np.ndarray)-> list[np.ndarray]:
     list_result:list[np.ndarray] = []
     D_inv:np.ndarray = invSimpleDiag(D)
-    
+    b = np.reshape(b,(len(b),1))
+    # print(f'shape D: {D.shape} shape y: {list_y[0].shape} shape b: {b.shape}, E_T: {E_T.shape}')
+    v:np.ndarray
     for vector in list_y:
-        v = np.matmul(np.matmul(-D_inv,E_T),vector) + np.matmul(D_inv,b).reshape((D_inv.shape[0],1))
+        if(np.count_nonzero(vector) > 0):
+            v =  np.matmul(D_inv,b) - np.matmul(np.matmul(D_inv,E_T),vector)
+        else:
+            v = np.matmul(D_inv,b)
         list_result.append(np.concatenate([v, vector])) # [x, y]
     return list_result
 
-def compute_residual(list_x:list[np.ndarray],A:np.ndarray, b:np.ndarray)-> list[np.ndarray]:
+def compute_residual(list_x:list[np.ndarray],A:np.ndarray, b:np.ndarray)-> list[float]:
     list_result:list[float] = []
+    b = np.reshape(b,(len(b),1))
+    b_norm:float = np.linalg.norm(b)
     for x in list_x:
         # print(f'shape A: {A.shape} shape x: {x.shape} shape b: {b.shape}')
-        list_result.append(np.linalg.norm(np.matmul(A,x) - b))
+        list_result.append(np.divide(np.linalg.norm(np.subtract(b, np.matmul(A,x))),b_norm))
     return list_result
+
+# https://tobydriscoll.net/fnc-julia/krylov/minrescg.html
+def eig_limit(A:np.ndarray, num_iterations:int, r0:np.ndarray) -> list[float]:
+    eig_values = np.linalg.eig(A)[0]
+    # print(f'numero di autovalori: {len(eig_values)}')
+    new_list_positive:list[float] = []
+    new_list_negative:list[float] = []
+    for eig in eig_values:
+        if(eig > 1e-10):
+            new_list_positive.append(eig)
+        elif(eig < 0 and eig < -1e-10):
+            new_list_negative.append(eig)
+    # print(new_list_positive)
+    # print('--------------------------------')
+    # print(new_list_negative)
+    max_eig_value_positive = np.max(new_list_positive)
+    min_eig_value_positive = np.min(new_list_positive)
+    max_eig_value_negative = np.min(new_list_negative)
+    min_eig_value_negative = np.max(new_list_negative)
+    # print(f'max P {max_eig_value_positive}, min P {min_eig_value_positive}, max N {max_eig_value_negative}, min N {min_eig_value_negative}')
+    condition_number_positive:float = np.abs(max_eig_value_positive) / np.abs(min_eig_value_positive)
+    condition_number_negative:float = np.abs(max_eig_value_negative) / np.abs(min_eig_value_negative)
+    # print(f'CP {condition_number_positive}, CN {condition_number_negative}')
+    # input('premi')
+    limit_convergence_MINRES:list[float] = []
+    for i in range(num_iterations):
+        limit_convergence_MINRES.append(np.power(np.divide(np.sqrt(condition_number_positive*condition_number_negative) - 1, np.sqrt(condition_number_positive*condition_number_negative) + 1),np.floor((i + 1)/2))) 
+    # * np.linalg.norm(r0)
+    return limit_convergence_MINRES

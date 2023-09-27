@@ -33,13 +33,13 @@ w2.close()
 fig,ax = plt.subplots(2, 1, constrained_layout = True)
 for inM in listEMatrix:
     print("Start solve: ",inM.generator)
-    # E:np.ndarray = inM.m
-    E:np.ndarray = np.eye(inM.m.shape[0],inM.m.shape[1])
+    E:np.ndarray = inM.m
+    # E:np.ndarray = np.eye(inM.m.shape[0],inM.m.shape[1])
     D:np.ndarray = util.diagonalM(E.shape[1])
     c:np.ndarray = np.array([n.deficit for  n in inM.nodes])
     b:np.ndarray = np.array([c.cost for c in inM.arcs])
     print(f'{E.shape},{D.shape},{b.shape},{c.shape}')
-    A,b_full= util.instanceofMCF(D,E,b,c)
+    A,b_full = util.instanceofMCF(D,E,b,c)
 
     conjugate = CG(inM)
     
@@ -108,6 +108,8 @@ for inM in listEMatrix:
 
     # list_residual_cg:list[float] = util.compute_residual_reduced_system(list_y_points_Cg, reduced_b, reduced_A)
     list_x_cg:list[np.ndarray] = util.compute_x_cg(list_y_points_Cg,D,E.T,b)
+    # print(list_x_cg[0])
+    # input('premu')
     list_residual_cg:list[float] = util.compute_residual(list_x_cg, A, b_full)
     # list_residual_MINRES:list[float] = util.compute_residual_reduced_system(list_y_points_MINRES, reduced_b, reduced_A)
     list_residual_MINRES:list[float] = util.compute_residual(list_x_points_MINRES, A, b_full)

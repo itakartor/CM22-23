@@ -54,6 +54,32 @@ def instanceofMCF(D,E,b,c):
     # nx.draw(G)
     # plt.show()
 
+def compute_x_cg(list_y:list[np.ndarray], D:np.ndarray, E_T:np.ndarray, b:np.ndarray)-> list[np.ndarray]:
+    list_result:list[np.ndarray] = []
+    D_inv:np.ndarray = invSimpleDiag(D)
+    b = np.reshape(b,(len(b),1))
+    invDb = np.dot(D_inv,b)
+    invDEt = np.dot(D_inv,E_T)
+    # print(f'shape D: {D.shape} shape y: {list_y[0].shape} shape b: {b.shape}, E_T: {E_T.shape}')
+    x:np.ndarray
+    for y in list_y:
+        if(np.count_nonzero(y) > 0):
+            x = np.subtract(invDb, np.dot(invDEt,y))
+        else:
+            x = invDb
+        list_result.append(np.concatenate([x, y]))
+        # list_result.append(np.concatenate([x, y])) # [x, y]
+    return list_result
+
+def compute_residual(list_x:list[np.ndarray],A:np.ndarray, b:np.ndarray)-> list[float]:
+    list_result:list[float] = []
+    b = np.reshape(b,(len(b),1))
+    b_norm:float = np.linalg.norm(b)
+    for x in list_x:
+        # print(f'shape A: {A.shape} shape x: {x.shape} shape b: {b.shape}')
+        list_result.append(np.divide(np.linalg.norm(np.subtract(b, np.dot(A,x))),b_norm))
+    return list_result
+
 def compute_residual_reduced_system(list_y:list[np.ndarray],b_reduced:np.ndarray,A_reduced:np.ndarray):
     list_result:list[float] = []
     b = np.reshape(b_reduced, (len(b_reduced), 1))
@@ -66,29 +92,6 @@ def compute_residual_reduced_system(list_y:list[np.ndarray],b_reduced:np.ndarray
         list_result.append(
             np.divide(np.linalg.norm(np.subtract(b, np.dot(A_reduced, y))), np.linalg.norm(b))
         )
-    return list_result
-
-def compute_x_cg(list_y:list[np.ndarray], D:np.ndarray, E_T:np.ndarray, b:np.ndarray)-> list[np.ndarray]:
-    list_result:list[np.ndarray] = []
-    D_inv:np.ndarray = invSimpleDiag(D)
-    b = np.reshape(b,(len(b),1))
-    # print(f'shape D: {D.shape} shape y: {list_y[0].shape} shape b: {b.shape}, E_T: {E_T.shape}')
-    v:np.ndarray
-    for vector in list_y:
-        if(np.count_nonzero(vector) > 0):
-            v =  np.matmul(D_inv,b) - np.matmul(np.matmul(D_inv,E_T),vector)
-        else:
-            v = np.matmul(D_inv,b)
-        list_result.append(np.concatenate([v, vector])) # [x, y]
-    return list_result
-
-def compute_residual(list_x:list[np.ndarray],A:np.ndarray, b:np.ndarray)-> list[float]:
-    list_result:list[float] = []
-    b = np.reshape(b,(len(b),1))
-    b_norm:float = np.linalg.norm(b)
-    for x in list_x:
-        # print(f'shape A: {A.shape} shape x: {x.shape} shape b: {b.shape}')
-        list_result.append(np.divide(np.linalg.norm(np.subtract(b, np.matmul(A,x))),b_norm))
     return list_result
 
 # https://tobydriscoll.net/fnc-julia/krylov/minrescg.html

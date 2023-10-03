@@ -14,6 +14,8 @@ class istance_cg:
     diagonalMatrix:np.ndarray
     b:np.ndarray
     name:str
+    b_old:np.ndarray
+    c_old:np.ndarray
 
 # it's a list of the instances of the CG problems
 class ConjugateGradient:
@@ -25,8 +27,15 @@ class ConjugateGradient:
         #print("I:",i)
         self.instanceProblem = istance_cg()
         self.instanceProblem.name=f"{eMatrix.generator.replace('./src/','')}"
-        c = self.build_array_deficit(eMatrix.nodes)
-        b = self.build_array_costs(eMatrix.arcs)
+        self.instanceProblem.c_old = self.build_array_deficit(eMatrix.nodes)
+        print(self.instanceProblem.c_old.shape)
+        self.instanceProblem.c_old = self.instanceProblem.c_old.reshape((self.instanceProblem.c_old.shape[0],1))
+        print(self.instanceProblem.c_old.shape)
+        self.instanceProblem.b_old = self.build_array_costs(eMatrix.arcs)
+        print(self.instanceProblem.b_old.shape)
+        self.instanceProblem.b_old = self.instanceProblem.b_old.reshape((self.instanceProblem.b_old.shape[0],1))
+        print(self.instanceProblem.b_old.shape)
+        input('cg size')
         self.instanceProblem.EMatrix = eMatrix.m
         numOfarcs:int = self.instanceProblem.EMatrix.shape[1]
         # this matrix is m*m that is arcs number  
@@ -44,7 +53,7 @@ class ConjugateGradient:
         #It's all values w
         #print("It's all values w") 
         #print(eMatrix.generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
-        self.instanceProblem.b = (matrix_diagInv @ b ) - c
+        self.instanceProblem.b = (matrix_diagInv @ self.instanceProblem.b_old ) - self.instanceProblem.c_old
 
     def build_array_deficit(self,listNodes:list) -> np.array:
         c = np.array([])
@@ -64,6 +73,10 @@ class ConjugateGradient:
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     def get_list_point_cg(self,A:np.ndarray, b:np.ndarray, x0:np.ndarray,tol:float,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") -> tuple[list[float],int,list[float]]:
+        # b = b.reshape((len(b),1))
+        print(f'{A.shape},{b.shape}')
+
+        input(' get_list_point_cg')
         start = time.time_ns()
         w = open(os.path.join(path_output,f"{solution_file}-{name}.txt"), "w")
         listResiduals:list[float] = []
@@ -127,7 +140,7 @@ class ConjugateGradient:
         if(inNumIteration != 0):
             points,last_iteration,listTimeY,list_y_points = self.get_list_point_cg(
                     A=self.instanceProblem.A,
-                    b=np.transpose(self.instanceProblem.b),
+                    b=self.instanceProblem.b,
                     x0=np.zeros((self.instanceProblem.A.shape[0],1)),
                     tol=inTol,
                     numIteration=inNumIteration, # rank of the matrix
@@ -136,7 +149,7 @@ class ConjugateGradient:
         else:
             points,last_iteration,listTimeY,list_y_points = self.get_list_point_cg(
                     A=self.instanceProblem.A,
-                    b=np.transpose(self.instanceProblem.b),
+                    b=self.instanceProblem.b,
                     x0=None,
                     tol=inTol,
                     numIteration=self.instanceProblem.A.shape[0], # rank of the matrix

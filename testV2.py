@@ -35,7 +35,10 @@ for inM in listEMatrix:
     print("Start solve: ",inM.generator)
     E:np.ndarray = inM.m
     # E:np.ndarray = np.eye(inM.m.shape[0],inM.m.shape[1])
-    D:np.ndarray = util.diagonalM(E.shape[1])
+    # D:np.ndarray = util.diagonalM(E.shape[1])
+    D:np.ndarray = np.eye(E.shape[1],E.shape[1])
+    print(D)
+    input('premi')
     c:np.ndarray = np.array([n.deficit for  n in inM.nodes])
     b:np.ndarray = np.array([c.cost for c in inM.arcs])
     print(f'{E.shape},{D.shape},{b.shape},{c.shape}')
@@ -45,10 +48,12 @@ for inM in listEMatrix:
     
     # Reduced System Conjugate gradient
     
-    reduced_A = conjugate.instanceProblem.A
-    reduced_b = conjugate.instanceProblem.b
+    
     residual_Cgr,last_iteration_Cgr,listTimeY_Cgr,list_y_points_Cg = conjugate.start_cg(inTol = tollerance)
-
+    
+    reduced_A:np.ndarray = conjugate.instanceProblem.A
+    reduced_b:np.ndarray = conjugate.instanceProblem.b
+    
     # Reduced System MINRES
 
     ax = plt.subplot(1,1,1)
@@ -107,9 +112,21 @@ for inM in listEMatrix:
     # Compare x and residual on the Original System
 
     # list_residual_cg:list[float] = util.compute_residual_reduced_system(list_y_points_Cg, reduced_b, reduced_A)
+    
     list_x_cg:list[np.ndarray] = util.compute_x_cg(list_y_points_Cg,D,E.T,b)
-    # print(list_x_cg[0])
-    # input('premu')
+    
+    # for index in range(len(list_x_cg)):
+    #     print(f'{D.shape},{list_x_cg[index].shape},{E.T.shape},{list_y_points_Cg[index].shape},{b.shape}')
+    #     print(np.dot(D,list_x_cg[index]) + np.dot(E.T,list_y_points_Cg[index]) - b.reshape((len(b),1)))
+    #     input('premi')
+    
+    # aOrigina = np.dot(np.dot(E,D),E.T)
+    # edinv = np.dot(np.dot(E,D),conjugate.instanceProblem.b_old)
+    
+    # print(f'{D.shape},{list_x_cg[0].shape},{E.T.shape},{list_y_points_Cg[0].shape},{conjugate.instanceProblem.b_old.shape}, {conjugate.instanceProblem.c_old.shape}')
+    # for index in range(len(list_x_cg)):
+    #     print(np.dot(E,list_x_cg[index]) - conjugate.instanceProblem.c_old + np.dot(aOrigina,list_y_points_Cg[index]) - edinv) 
+    #     input('premu')
     list_residual_cg:list[float] = util.compute_residual(list_x_cg, A, b_full)
     # list_residual_MINRES:list[float] = util.compute_residual_reduced_system(list_y_points_MINRES, reduced_b, reduced_A)
     list_residual_MINRES:list[float] = util.compute_residual(list_x_points_MINRES, A, b_full)

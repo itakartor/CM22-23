@@ -58,9 +58,7 @@ def instanceofMCF(D,E,b,c):
 
 def compute_x_cg(list_y:list[np.ndarray], D:np.ndarray, E_T:np.ndarray, b:np.ndarray)-> list[np.ndarray]:
     list_result:list[np.ndarray] = []
-    D_inv:np.ndarray = invSimpleDiag(D)
-    print(D_inv)
-    input('premi')
+    D_inv:np.ndarray = np.linalg.inv(D)#invSimpleDiag(D)
     b = np.reshape(b,(len(b),1))
     invDb = np.dot(D_inv,b)
     invDEt = np.dot(D_inv,E_T)
@@ -70,25 +68,20 @@ def compute_x_cg(list_y:list[np.ndarray], D:np.ndarray, E_T:np.ndarray, b:np.nda
     for y in list_y:
         if(np.count_nonzero(y) > 0):
             x = - np.dot(invDEt,y) + invDb # -D^-1*E^T*y + D^-1*b
-            v = x + np.dot(invDEt,y) - invDb
         else:
             x = invDb
-            v = x - invDb
-        # print(v)
-        # input('premi')
         list_result.append(np.concatenate([x, y]))
         # list_result.append(x) # [x, y]
     return list_result
 
-def compute_residual(list_x:list[np.ndarray],A:np.ndarray, b:np.ndarray)-> list[np.ndarray]:
-    list_result:list[np.ndarray] = []
+def compute_residual(list_x:list[np.ndarray],A:np.ndarray, b:np.ndarray)-> list[float]:
+    list_result:list[float] = []
     b = np.reshape(b,(len(b),1))
     b_norm:float = np.linalg.norm(b)
     for x in list_x:
         # print(f'shape A: {A.shape} shape x: {x.shape} shape b: {b.shape}')
         # input('compute_residual')
         list_result.append(np.divide(np.linalg.norm(np.subtract(b, np.dot(A,x))),b_norm))
-        # list_result.append(np.dot(A,x))
     return list_result
 
 def compute_residual_reduced_system(list_y:list[np.ndarray],b_reduced:np.ndarray,A_reduced:np.ndarray):
@@ -106,7 +99,7 @@ def compute_residual_reduced_system(list_y:list[np.ndarray],b_reduced:np.ndarray
     return list_result
 
 # https://tobydriscoll.net/fnc-julia/krylov/minrescg.html
-def eig_limit(A:np.ndarray, num_iterations:int, r0:np.ndarray) -> list[float]:
+def eig_limit(A:np.ndarray, num_iterations:int) -> list[float]:
     eig_values = np.linalg.eig(A)[0]
     # print(f'numero di autovalori: {len(eig_values)}')
     new_list_positive:list[float] = []

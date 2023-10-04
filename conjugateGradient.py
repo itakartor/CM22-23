@@ -22,38 +22,26 @@ class ConjugateGradient:
     instanceProblem:istance_cg
     #initialize istance of the problems  with incidence matrixis 
 
-    def __init__(self,eMatrix:IncidenceMatrix):
-        # print(f"lunghezza {len(eMatrices)}")
-        #print("I:",i)
+    def __init__(self,eMatrix:IncidenceMatrix, D:np.ndarray):
         self.instanceProblem = istance_cg()
         self.instanceProblem.name=f"{eMatrix.generator.replace('./src/','')}"
         self.instanceProblem.c_old = self.build_array_deficit(eMatrix.nodes)
-        print(self.instanceProblem.c_old.shape)
         self.instanceProblem.c_old = self.instanceProblem.c_old.reshape((self.instanceProblem.c_old.shape[0],1))
-        print(self.instanceProblem.c_old.shape)
         self.instanceProblem.b_old = self.build_array_costs(eMatrix.arcs)
-        print(self.instanceProblem.b_old.shape)
         self.instanceProblem.b_old = self.instanceProblem.b_old.reshape((self.instanceProblem.b_old.shape[0],1))
-        print(self.instanceProblem.b_old.shape)
-        input('cg size')
         self.instanceProblem.EMatrix = eMatrix.m
-        numOfarcs:int = self.instanceProblem.EMatrix.shape[1]
-        # this matrix is m*m that is arcs number  
-        #print("this matrix is m*m that is arcs number")
-        self.instanceProblem.diagonalMatrix = diagonalM(numOfarcs)
-        
         #E*D^-1
         #print("D^-1")
-        invDiag = invSimpleDiag(self.instanceProblem.diagonalMatrix)
+        invDiag = np.linalg.inv(D) #invSimpleDiag(self.instanceProblem.diagonalMatrix)
         #print("E*D^-1")
-        matrix_diagInv = self.instanceProblem.EMatrix @ invDiag
+        matrix_diagInv = np.dot(self.instanceProblem.EMatrix,invDiag)
         #E*D^-1*Et
         #print("E*D^-1*Et") 
-        self.instanceProblem.A = matrix_diagInv @ self.instanceProblem.EMatrix.T
+        self.instanceProblem.A = np.dot(matrix_diagInv,self.instanceProblem.EMatrix.T)
         #It's all values w
         #print("It's all values w") 
         #print(eMatrix.generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
-        self.instanceProblem.b = (matrix_diagInv @ self.instanceProblem.b_old ) - self.instanceProblem.c_old
+        self.instanceProblem.b = np.subtract(np.dot(matrix_diagInv,self.instanceProblem.b_old),self.instanceProblem.c_old)
 
     def build_array_deficit(self,listNodes:list) -> np.array:
         c = np.array([])
@@ -74,9 +62,7 @@ class ConjugateGradient:
     # n is the number of iterations of the algorithm
     def get_list_point_cg(self,A:np.ndarray, b:np.ndarray, x0:np.ndarray,tol:float,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") -> tuple[list[float],int,list[float]]:
         # b = b.reshape((len(b),1))
-        print(f'{A.shape},{b.shape}')
-
-        input(' get_list_point_cg')
+        # print(f'{A.shape},{b.shape}')
         start = time.time_ns()
         w = open(os.path.join(path_output,f"{solution_file}-{name}.txt"), "w")
         listResiduals:list[float] = []
@@ -111,7 +97,8 @@ class ConjugateGradient:
             list_y_points.append(x)
             r = r - alpha *Ad
             retTol = r.T @ r
-            listResiduals.append(np.divide(np.linalg.norm(retTol[0][0]),np.linalg.norm(b)))
+            # listResiduals.append(np.divide(np.linalg.norm(retTol[0][0]),np.linalg.norm(b)))
+            listResiduals.append(np.divide(np.linalg.norm(r),np.linalg.norm(b)))
             stop = time.time_ns()
             listTimeY.append((stop-start)/1e+6)
             if(retTol < tol):

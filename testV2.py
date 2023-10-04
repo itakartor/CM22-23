@@ -35,16 +35,14 @@ for inM in listEMatrix:
     print("Start solve: ",inM.generator)
     E:np.ndarray = inM.m
     # E:np.ndarray = np.eye(inM.m.shape[0],inM.m.shape[1])
-    # D:np.ndarray = util.diagonalM(E.shape[1])
-    D:np.ndarray = np.eye(E.shape[1],E.shape[1])
-    print(D)
-    input('premi')
+    D:np.ndarray = util.diagonalM(E.shape[1])
+    # D:np.ndarray = np.eye(E.shape[1],E.shape[1])
     c:np.ndarray = np.array([n.deficit for  n in inM.nodes])
     b:np.ndarray = np.array([c.cost for c in inM.arcs])
-    print(f'{E.shape},{D.shape},{b.shape},{c.shape}')
+    # print(f'{E.shape},{D.shape},{b.shape},{c.shape}')
     A,b_full = util.instanceofMCF(D,E,b,c)
 
-    conjugate = CG(inM)
+    conjugate = CG(inM, D)
     
     # Reduced System Conjugate gradient
     
@@ -72,7 +70,7 @@ for inM in listEMatrix:
     # # Original System MINRES
 
     last_iteration_MINRES,xc_MINRES,residual_MINRES,exit_MINRES,listTimeY2_MINRES,list_y_points_MINRES,list_x_points_MINRES = custom_minres(A, b_full, D.shape[0], maxiter=A.shape[0], tol = tollerance)
-    list_limit_eig:list[float] = util.eig_limit(A,last_iteration_MINRES,b_full)
+    list_limit_eig:list[float] = util.eig_limit(A,last_iteration_MINRES)
     ax = plt.subplot(1,1,1)
     ax.grid(True)
     ax.set_title(TITLE_CHART_MINRES)
@@ -114,7 +112,7 @@ for inM in listEMatrix:
     # list_residual_cg:list[float] = util.compute_residual_reduced_system(list_y_points_Cg, reduced_b, reduced_A)
     
     list_x_cg:list[np.ndarray] = util.compute_x_cg(list_y_points_Cg,D,E.T,b)
-    
+
     # for index in range(len(list_x_cg)):
     #     print(f'{D.shape},{list_x_cg[index].shape},{E.T.shape},{list_y_points_Cg[index].shape},{b.shape}')
     #     print(np.dot(D,list_x_cg[index]) + np.dot(E.T,list_y_points_Cg[index]) - b.reshape((len(b),1)))
@@ -125,9 +123,48 @@ for inM in listEMatrix:
     
     # print(f'{D.shape},{list_x_cg[0].shape},{E.T.shape},{list_y_points_Cg[0].shape},{conjugate.instanceProblem.b_old.shape}, {conjugate.instanceProblem.c_old.shape}')
     # for index in range(len(list_x_cg)):
-    #     print(np.dot(E,list_x_cg[index]) - conjugate.instanceProblem.c_old + np.dot(aOrigina,list_y_points_Cg[index]) - edinv) 
+        #  print(np.dot(E,list_x_cg[index]) - conjugate.instanceProblem.c_old + np.dot(aOrigina,list_y_points_Cg[index]) - edinv) 
     #     input('premu')
     list_residual_cg:list[float] = util.compute_residual(list_x_cg, A, b_full)
+    # list_controprova_cg:list[float] = []
+    # norm_b_controprova:float = np.linalg.norm(- edinv + conjugate.instanceProblem.c_old)
+    # for i in range(len(list_x_cg)):
+    #     # print(list_x_cg[i])
+    #     # print('original ------------------')
+    #     # print(list_residual_cg[i])
+    #     # print('--------------')
+    #     # print(list_y_points_Cg[i])
+    #     # print('--------------')
+    #     # print((np.dot(aOrigina,list_y_points_Cg[i]) - edinv + conjugate.instanceProblem.c_old))
+    #     list_controprova_cg.append(np.linalg.norm(np.dot(aOrigina,list_y_points_Cg[i]) - edinv + conjugate.instanceProblem.c_old))
+    
+
+
+    # ax = plt.subplot(1,1,1)
+    # ax.grid(True)
+    # ax.semilogy(list_residual_cg,linestyle="solid",color = 'red',label='CG')
+    # ax.semilogy(list_controprova_cg,linestyle="solid",color = 'blue',label='controprova')
+    # ax.legend()
+    # plt.suptitle(f'Residual Compare on Reduced System {titles_list[index_chart - 1]}',x = 0.5)
+    # plt.show()
+    # plt.subplots_adjust(hspace=0.5)
+
+    # print(A)
+    # print(b_full)
+    # for i in range(len(list_x_cg)):
+    #     print(list_x_cg[i])
+    #     print('original ------------------')
+    #     print(list_residual_cg[i])
+    #     print('--------------')
+    #     print(list_y_points_Cg[i])
+    #     print('--------------')
+    #     print((np.dot(aOrigina,list_y_points_Cg[i]) - edinv + conjugate.instanceProblem.c_old))
+    #     print(np.dot(aOrigina,list_y_points_Cg[i]))
+    #     print(edinv)
+    #     print(conjugate.instanceProblem.c_old)
+    #     input('premi')
+    
+    
     # list_residual_MINRES:list[float] = util.compute_residual_reduced_system(list_y_points_MINRES, reduced_b, reduced_A)
     list_residual_MINRES:list[float] = util.compute_residual(list_x_points_MINRES, A, b_full)
     # list_limit_eig:list[float] = eig_limit(A,A.shape[0],list_residual_MINRES[0])
@@ -145,3 +182,5 @@ for inM in listEMatrix:
     plt.subplots_adjust(hspace=0.5)
 
     index_chart = index_chart+1
+
+

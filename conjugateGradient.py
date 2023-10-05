@@ -24,7 +24,7 @@ class ConjugateGradient:
 
     def __init__(self,eMatrix:IncidenceMatrix, D:np.ndarray):
         self.instanceProblem = istance_cg()
-        self.instanceProblem.name=f"{eMatrix.generator.replace('./src/','')}"
+        self.instanceProblem.name=f"{eMatrix.generator.replace('./src/','').replace('./','')}"
         self.instanceProblem.c_old = self.build_array_deficit(eMatrix.nodes)
         self.instanceProblem.c_old = self.instanceProblem.c_old.reshape((self.instanceProblem.c_old.shape[0],1))
         self.instanceProblem.b_old = self.build_array_costs(eMatrix.arcs)

@@ -177,7 +177,7 @@ for inM in listEMatrix:
     ax.semilogy(list_residual_MINRES,linestyle="solid",color = 'blue',label='MINRES')
     ax.semilogy(list_limit_eig,linestyle="solid",color = 'green',label='Upperbound Minres')
     ax.legend()
-    plt.suptitle(f'Residual Compare on Reduced System {titles_list[index_chart - 1]}',x = 0.5)
+    plt.suptitle(f'Residual Compare on Original System {titles_list[index_chart - 1]}',x = 0.5)
     plt.show()
     plt.subplots_adjust(hspace=0.5)
 

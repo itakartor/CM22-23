@@ -6,12 +6,11 @@ import numpy as np
 import configs
 from matplotlib import pyplot as plt
 
-from util import diagonalM, invSimpleDiag, timeit
+from util import timeit
 
 class istance_cg:
     A:np.ndarray #E*D^-1*Et
     EMatrix:np.ndarray
-    diagonalMatrix:np.ndarray
     b:np.ndarray
     name:str
     b_old:np.ndarray
@@ -30,17 +29,15 @@ class ConjugateGradient:
         self.instanceProblem.b_old = self.build_array_costs(eMatrix.arcs)
         self.instanceProblem.b_old = self.instanceProblem.b_old.reshape((self.instanceProblem.b_old.shape[0],1))
         self.instanceProblem.EMatrix = eMatrix.m
+        
         #E*D^-1
-        #print("D^-1")
-        invDiag = np.linalg.inv(D) #invSimpleDiag(self.instanceProblem.diagonalMatrix)
-        #print("E*D^-1")
+        invDiag = np.linalg.inv(D)
+        
         matrix_diagInv = np.dot(self.instanceProblem.EMatrix,invDiag)
-        #E*D^-1*Et
-        #print("E*D^-1*Et") 
+        
+        #E*D^-1*E^T
         self.instanceProblem.A = np.dot(matrix_diagInv,self.instanceProblem.EMatrix.T)
         #It's all values w
-        #print("It's all values w") 
-        #print(eMatrix.generator,"MatrixDiagInv:",matrix_diagInv.shape,"B:",b.shape,"C:",c.shape)
         self.instanceProblem.b = np.subtract(np.dot(matrix_diagInv,self.instanceProblem.b_old),self.instanceProblem.c_old)
 
     def build_array_deficit(self,listNodes:list) -> np.array:
@@ -61,8 +58,6 @@ class ConjugateGradient:
     # x0 is the starting point
     # n is the number of iterations of the algorithm
     def get_list_point_cg(self,A:np.ndarray, b:np.ndarray, x0:np.ndarray,tol:float,path_output=configs.PATH_DIRECTORY_OUTPUT,solution_file=configs.NAME_FILE_SOLUTION_CG,numIteration=100,name="") -> tuple[list[float],int,list[float]]:
-        # b = b.reshape((len(b),1))
-        # print(f'{A.shape},{b.shape}')
         start = time.time_ns()
         w = open(os.path.join(path_output,f"{solution_file}-{name}.txt"), "w")
         listResiduals:list[float] = []
@@ -97,7 +92,6 @@ class ConjugateGradient:
             list_y_points.append(x)
             r = r - alpha *Ad
             retTol = r.T @ r
-            # listResiduals.append(np.divide(np.linalg.norm(retTol[0][0]),np.linalg.norm(b)))
             listResiduals.append(np.divide(np.linalg.norm(r),np.linalg.norm(b)))
             stop = time.time_ns()
             listTimeY.append((stop-start)/1e+6)
@@ -116,11 +110,10 @@ class ConjugateGradient:
         w2.write(f"CG& & {numIteration - 1}& {last_iteration}& {listTimeY[-1]} ms& {retTol[0][0]} \\ \n")
         print(f"[CG] last iteration: {last_iteration}, residual: {retTol[0][0]}, time: {listTimeY[-1]}ms, tollerance: {tol}, maxiter: {numIteration - 1} \n")
         w2.close()
-        # return listPoints
         return listResiduals,last_iteration,listTimeY,list_y_points
 
     #compute the conjugate algorithm for all the problem instances
-    # @timeit
+    @timeit
     def start_cg(self, inNumIteration:int=0,inTol:float = 1e-5):
         print(f"rank matrix: {self.instanceProblem.A.shape[0]}")
         points:list[float] = []

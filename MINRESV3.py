@@ -172,9 +172,6 @@ def custom_minres(A:np.ndarray, b:np.ndarray , m_dimension:int, x0:np.ndarray = 
 
     #Iteraions
     for j in range(maxiter):
-        # print(xc[m_dimension,:], xc[m_dimension + 1,:])
-        # print(xc[m_dimension:,:])
-        # input('pèremi')
         #Lanczos step iteration
         alpha,beta2,v_next = lanczos(A,v1,v0,beta1)
         #update of vj and vj+1

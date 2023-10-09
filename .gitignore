@@ -2,3 +2,5 @@ env
 graphGenerators
 __pycache__
 generators/binary/
+generators
+outputMatrix

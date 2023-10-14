@@ -18,6 +18,7 @@ def householder_vector(x):
     return u,s
 
 def back_substitution(A: np.ndarray, b: np.ndarray):
+    # è generale potrebbe essere resa più specifica per le posizioni non nulle
     n = len(b)
     x = np.zeros_like(b)
     
@@ -69,9 +70,12 @@ def QR_givens_rotation(A:np.ndarray):
     n, m = A.shape
     Q:np.ndarray = np.eye(n) #Givens Matrix 1 ...1 c s -c -s
     R:np.ndarray = np.copy(A)
+    # questa prende tutti gli indici della sotto triagonale sarebbe meglio prendere solo gli indici
+    # di nostro interesse che coinvogono le 3 diagonali non nulle
+    rows, cols = np.tril_indices(n, -1, m)   
     
-    rows, cols = np.tril_indices(n, -1, m)
-    
+    # sarebbe meglio non ricalcolare sempre Q ma calcolare solo l'ultima iterazione e aggiungerla a Q
+    # la stessa cosa vale anche per R 
     for (row, col) in zip(rows, cols):
         # If the subdiagonal element is nonzero, then compute the nonzero 
         # components of the rotation matrix        

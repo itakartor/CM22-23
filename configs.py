@@ -1,5 +1,5 @@
 PATH_DIRECTORY_TEST = "./testAnalyze"
-PATH_DMX = "./generators/dmx/smallMatrix"
+PATH_DMX = "./testAnalyze"
 
 PATH_DIRECTORY_OUTPUT = "./outputMatrix"
 NAME_FILE_MATRIX_INCIDENCE = "incidenceMatrix"

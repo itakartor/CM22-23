@@ -1,8 +1,8 @@
 import os
 import numpy as np
-import IncidenceMatrixV2 
+import IncidenceMatrix
 import util
-from MINRESV3 import  custom_minres
+from MINRES import  custom_minres
 from conjugateGradient import ConjugateGradient as CG
 import configs
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ TITLE_CHART_CG:str = 'Conjugate'
 TITLE_CHART_MINRES:str = 'MINRES'
 
 #Build the Incidence Matrix of the graphs generated |complete graph ,grid graph,rmf graph|
-listEMatrix:list[IncidenceMatrixV2.IncidenceMatrix] = IncidenceMatrixV2.buildIncidenceMatrix()
+listEMatrix:list[IncidenceMatrix.IncidenceMatrix] = IncidenceMatrix.buildIncidenceMatrix()
 
 #for each Incdence matrix we build the Matrix A and the vector B from |D   E|=|c|
 #                                                                     |E^t 0| |b|

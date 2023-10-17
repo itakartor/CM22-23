@@ -1,5 +1,5 @@
 import time
-from IncidenceMatrixV2 import IncidenceMatrix
+from IncidenceMatrix import IncidenceMatrix
 
 import os
 import numpy as np
